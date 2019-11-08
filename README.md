@@ -1,103 +1,113 @@
 
 ---
 **Module 1 Final Project Submission**
-
 * Student name: **Ru Keïn**
 * Student pace: **Full-Time**
 * Project review date/time: **November 4, 2019 at 2:00 PM PST**
 * Instructor name: **James Irving, PhD**
-* Blog post URL: www.hakkeray.com/projects/datascience/king-county-housing-data
+---
+> Blog post URL: 
+http://www.hakkeray.com/projects/datascience/2019/11/06/predicting-home-values-with-multiple-linear-regression.html
+
+> Link to video: 
+https://vimeo.com/rukein/datascience-project-1
+
+> Link to tableau public: https://public.tableau.com/views/HousePricesbyZipCodeinKingCountyWA/KingCounty?:display_count=y&:origin=viz_share_link
 
 **GOAL**
-* Identify best variable(s) for predicting property values in King County, Washington, USA.
+* Identify best combination of variable(s) for predicting property values in King County, Washington, USA. 
 
 **OBJECTIVES**
 * Address null, missing, duplicate, and unreliable values in the data.
 * Determine best approach for analyzing each feature: continuous vs. categorical values
-* Identify which combination of features (X) are the best predictors of the target (y).
+* Identify which combination of features (X) are the best predictors of the target (y). 
 
 **QUESTIONS TO EXPLORE**
-* Which predictors are closely related (and should be dropped)?
-* Is there an overlap in square-footage measurements?
-* Can we combine two features into one to achieve a higher correlation?
-* Does geography (location) have any relationship with the values of each categorical variable?
-* Which features are the best candidates for predicting property values?
-* Does removing outliers improve the distribution?
-* Does scaling/transforming variables improve the regression algorithm?
+* *Scrub*
+    * 1. How should we address each feature to prepare it for EDA?
+ 
+* *Explore*
+    * 2. Which predictors are closely related (and should be dropped)?
+    * 3. Is there an overlap in square-footage measurements?
+    * 4. Can we combine two features into one to achieve a higher correlation?
+    * 5. Does geography (location) have any relationship with the values of each categorical variable?
+ 
+* *Model*
+    * 6. Which features are the best candidates for predicting property values?
+    * 7. Does removing outliers improve the distribution?
+    * 8. Does scaling/transforming variables improve the regression algorithm?
 
-**FUTURE ANALYSES**
-* Analyze Duplicates - is there a trend within houses re-sold for higher prices?
+**TABLE OF CONTENTS**
+
+**[1  OBTAIN]**
+Import libraries, packages, data set
+* 1.1 Import libraries and packages
+* 1.2 Import custom functions
+* 1.3 Import dataset and review columns, variables
+
+**[2  SCRUB]**
+Clean and organize the data.
+* 2.1 Find and replace missing values (nulls)
+* 2.2 Identify/Address characteristics of each variable (numeric vs categorical) 
+* 2.3 Check for and drop any duplicate observations (rows)
+* 2.4 Decide which variables to keep for EDA
+
+**[3  EXPLORE]**
+Preliminary analysis and visualizations.
+* 3.1 Linearity: Scatterplots, scattermatrix
+* 3.2 Multicollinearity: Heatmaps, scatterplots
+* 3.3 Distribution: Histograms, Kernel Density Estimates (KDE), LMplots, Boxplots
+* 3.4 Regression: regression plots
+
+**[4  MODEL]**
+Iterate through linreg models to find best fit predictors
+* 4.1 Model 1: OLS Linear Regression
+* 4.2 Model 2: One-Hot Encoding
+* 4.3 Model 3: Error terms
+* 4.4 Model 4: QQ Plots
+* 4.5 Model 5: Outliers
+* 4.6 Model 6: Robust Scaler
+
+**[5  VALIDATION]**
+Validate the results.
+* 5.1 K-Fold Cross Validation
+
+**[6  INTERPRET]**
+Summarize the findings and make recommendations.
+* 6.1 Briefly summarize the results of analysis
+* 6.2 Make recommendations
+* 6.3 Describe possible future directions
+
+**[7  Additional Research]**
+Extracting median home values based on zipcodes
 
 ---
 # OBTAIN
-* Import requisite libraries and data
-* Inspect columns, dataypes
-    * df.head()
+
+## Import libraries + packaes
 
 
 ```python
+# Import libraries and packages
+
 # import PyPi package for cohort libraries using shortcut
 #!pip install -U fsds_100719 # comment out after install so it won't run again
+# Import packages
 import fsds_100719 as fs
 from fsds_100719.imports import *
-plt.style.use('seaborn')
+plt.style.use('fivethirtyeight')
 #inline_rc = dict(mpl.rcParams)
 import statsmodels.api as sm
+import statsmodels.stats.api as sms
 import statsmodels.formula.api as smf
+import scipy.stats as stats
 from scipy.stats import normaltest as normtest # D'Agostino and Pearson's omnibus test
 from collections import Counter
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import MinMaxScaler
-```
-
-    fsds_1007219  v0.4.8 loaded.  Read the docs: https://fsds.readthedocs.io/en/latest/
-    > For convenient loading of standard modules use: `>> from fsds_100719.imports import *`
+#!pip install uszipcode
 
 
-
-
-<style  type="text/css" >
-</style><table id="T_39eeb58c_ff49_11e9_a102_14109fdfaded" ><caption>Loaded Packages and Handles</caption><thead>    <tr>        <th class="col_heading level0 col0" >Package</th>        <th class="col_heading level0 col1" >Handle</th>        <th class="col_heading level0 col2" >Description</th>    </tr></thead><tbody>
-                <tr>
-                                <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow0_col0" class="data row0 col0" >IPython.display</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow0_col1" class="data row0 col1" >dp</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow0_col2" class="data row0 col2" >Display modules with helpful display and clearing commands.</td>
-            </tr>
-            <tr>
-                                <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow1_col0" class="data row1 col0" >fsds_100719</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow1_col1" class="data row1 col1" >fs</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow1_col2" class="data row1 col2" >Custom data science bootcamp student package</td>
-            </tr>
-            <tr>
-                                <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow2_col0" class="data row2 col0" >matplotlib</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow2_col1" class="data row2 col1" >mpl</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow2_col2" class="data row2 col2" >Matplotlib's base OOP module with formatting artists</td>
-            </tr>
-            <tr>
-                                <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow3_col0" class="data row3 col0" >matplotlib.pyplot</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow3_col1" class="data row3 col1" >plt</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow3_col2" class="data row3 col2" >Matplotlib's matlab-like plotting module</td>
-            </tr>
-            <tr>
-                                <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow4_col0" class="data row4 col0" >numpy</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow4_col1" class="data row4 col1" >np</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow4_col2" class="data row4 col2" >scientific computing with Python</td>
-            </tr>
-            <tr>
-                                <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow5_col0" class="data row5 col0" >pandas</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow5_col1" class="data row5 col1" >pd</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow5_col2" class="data row5 col2" >High performance data structures and tools</td>
-            </tr>
-            <tr>
-                                <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow6_col0" class="data row6 col0" >seaborn</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow6_col1" class="data row6 col1" >sns</td>
-                        <td id="T_39eeb58c_ff49_11e9_a102_14109fdfadedrow6_col2" class="data row6 col2" >High-level data visualization library based on matplotlib</td>
-            </tr>
-    </tbody></table>
-
-
-
-```python
 #ignore pink warnings
 import warnings
 warnings.filterwarnings('ignore')
@@ -107,10 +117,302 @@ pd.set_option('display.max_columns', 0)
 # pd.set_option('display.max_rows','')
 ```
 
+    fsds_1007219  v0.4.8 loaded.  Read the docs: https://fsds.readthedocs.io/en/latest/ 
+    > For convenient loading of standard modules use: `>> from fsds_100719.imports import *`
+    
+
+
+
+<style  type="text/css" >
+</style><table id="T_184fa97e_018d_11ea_a2de_f40f2405a054" ><caption>Loaded Packages and Handles</caption><thead>    <tr>        <th class="col_heading level0 col0" >Package</th>        <th class="col_heading level0 col1" >Handle</th>        <th class="col_heading level0 col2" >Description</th>    </tr></thead><tbody>
+                <tr>
+                                <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row0_col0" class="data row0 col0" >IPython.display</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row0_col1" class="data row0 col1" >dp</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row0_col2" class="data row0 col2" >Display modules with helpful display and clearing commands.</td>
+            </tr>
+            <tr>
+                                <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row1_col0" class="data row1 col0" >fsds_100719</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row1_col1" class="data row1 col1" >fs</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row1_col2" class="data row1 col2" >Custom data science bootcamp student package</td>
+            </tr>
+            <tr>
+                                <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row2_col0" class="data row2 col0" >matplotlib</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row2_col1" class="data row2 col1" >mpl</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row2_col2" class="data row2 col2" >Matplotlib's base OOP module with formatting artists</td>
+            </tr>
+            <tr>
+                                <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row3_col0" class="data row3 col0" >matplotlib.pyplot</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row3_col1" class="data row3 col1" >plt</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row3_col2" class="data row3 col2" >Matplotlib's matlab-like plotting module</td>
+            </tr>
+            <tr>
+                                <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row4_col0" class="data row4 col0" >numpy</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row4_col1" class="data row4 col1" >np</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row4_col2" class="data row4 col2" >scientific computing with Python</td>
+            </tr>
+            <tr>
+                                <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row5_col0" class="data row5 col0" >pandas</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row5_col1" class="data row5 col1" >pd</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row5_col2" class="data row5 col2" >High performance data structures and tools</td>
+            </tr>
+            <tr>
+                                <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row6_col0" class="data row6 col0" >seaborn</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row6_col1" class="data row6 col1" >sns</td>
+                        <td id="T_184fa97e_018d_11ea_a2de_f40f2405a054row6_col2" class="data row6 col2" >High-level data visualization library based on matplotlib</td>
+            </tr>
+    </tbody></table>
+
+
+
+        <script type="text/javascript">
+        window.PlotlyConfig = {MathJaxConfig: 'local'};
+        if (window.MathJax) {MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
+        if (typeof require !== 'undefined') {
+        require.undef("plotly");
+        requirejs.config({
+            paths: {
+                'plotly': ['https://cdn.plot.ly/plotly-latest.min']
+            }
+        });
+        require(['plotly'], function(Plotly) {
+            window._Plotly = Plotly;
+        });
+        }
+        </script>
+        
+
+
+## Import custom functions
+
 
 ```python
-# import dataset and review data types, columns, values
-df = pd.read_csv('kc_house_data.csv')
+# HOT_STATS() function: display statistical summaries of a feature column
+def hot_stats(data, column, verbose=False, t=None):
+    """
+    Scans the values of a column within a dataframe and displays its datatype, 
+    nulls (incl. pct of total), unique values, non-null value counts, and 
+    statistical info (if the datatype is numeric).
+    
+    ---------------------------------------------
+    
+    Parameters:
+    
+    **args:
+    
+        data: accepts dataframe
+    
+        column: accepts name of column within dataframe (should be inside quotes '')
+    
+    **kwargs:
+    
+        verbose: (optional) accepts a boolean (default=False); verbose=True will display all 
+        unique values found.   
+    
+        t: (optional) accepts column name as target to calculate correlation coefficient against 
+        using pandas data.corr() function. 
+    
+    -------------
+    
+    Examples: 
+    
+    hot_stats(df, 'str_column') --> where df = data, 'string_column' = column you want to scan
+    
+    hot_stats(df, 'numeric_column', t='target') --> where 'target' = column to check correlation value
+    
+    -----------------
+    Developer notes: additional features to add in the future:
+    -get mode(s)
+    -functionality for string objects
+    -pass multiple columns at once and display all
+    -----------------
+    SAMPLE OUTPUT: 
+    ****************************************
+    
+    -------->
+    HOT!STATS
+    <--------
+
+    CONDITION
+    Data Type: int64
+
+    count    21597.000000
+    mean         3.409825
+    std          0.650546
+    min          1.000000
+    25%          3.000000
+    50%          3.000000
+    75%          4.000000
+    max          5.000000
+    Name: condition, dtype: float64 
+
+    à-la-Mode: 
+    0    3
+    dtype: int64
+
+
+    No Nulls Found!
+
+    Non-Null Value Counts:
+    3    14020
+    4     5677
+    5     1701
+    2      170
+    1       29
+    Name: condition, dtype: int64
+
+    # Unique Values: 5
+    
+    """
+    # assigns variables to call later as shortcuts 
+    feature = data[column]
+    rdash = "-------->"
+    ldash = "<--------"
+    
+    # figure out which hot_stats to display based on dtype 
+    if feature.dtype == 'float':
+        hot_stats = feature.describe().round(2)
+    elif feature.dtype == 'int':
+        hot_stats = feature.describe()
+    elif feature.dtype == 'object' or 'category' or 'datetime64[ns]':
+        hot_stats = feature.agg(['min','median','max'])
+        t = None # ignores corr check for non-numeric dtypes by resetting t
+    else:
+        hot_stats = None
+
+    # display statistics (returns different info depending on datatype)
+    print(rdash)
+    print("HOT!STATS")
+    print(ldash)
+    
+    # display column name formatted with underline
+    print(f"\n{feature.name.upper()}")
+    
+    # display the data type
+    print(f"Data Type: {feature.dtype}\n")
+    
+    # display the mode
+    print(hot_stats,"\n")
+    print(f"à-la-Mode: \n{feature.mode()}\n")
+    
+    # find nulls and display total count and percentage
+    if feature.isna().sum() > 0:  
+        print(f"Found\n{feature.isna().sum()} Nulls out of {len(feature)}({round(feature.isna().sum()/len(feature)*100,2)}%)\n")
+    else:
+        print("\nNo Nulls Found!\n")
+    
+    # display value counts (non-nulls)
+    print(f"Non-Null Value Counts:\n{feature.value_counts()}\n")
+    
+    # display count of unique values
+    print(f"# Unique Values: {len(feature.unique())}\n")
+    # displays all unique values found if verbose set to true
+    if verbose == True:
+        print(f"Unique Values:\n {feature.unique()}\n")
+        
+    # display correlation coefficient with target for numeric columns:
+    if t != None:
+        corr = feature.corr(data[t]).round(4)
+        print(f"Correlation with {t.upper()}: {corr}")
+```
+
+
+```python
+# NULL_HUNTER() function: display Null counts per column/feature
+def null_hunter(df):
+    print(f"Columns with Null Values")
+    print("------------------------")
+    for column in df:
+        if df[column].isna().sum() > 0:
+            print(f"{df[column].name}: \n{df[column].isna().sum()} out of {len(df[column])} ({round(df[column].isna().sum()/len(df[column])*100,2)}%)\n")
+```
+
+
+```python
+# CORRCOEF_DICT() function: calculates correlation coefficients assoc. with features and stores in a dictionary
+def corr_dict(X, y):
+    corr_coefs = []
+    for x in X:
+        corr = df[x].corr(df[y])
+        corr_coefs.append(corr)
+    
+    corr_dict = {}
+    
+    for x, c in zip(X, corr_coefs):
+        corr_dict[x] = c
+    return corr_dict
+```
+
+
+```python
+# SUB_SCATTER() function: pass list of features (x_cols) and compare against target (or another feature)
+def sub_scatter(data, x_cols, y, color=None, nrows=None, ncols=None):
+    """
+    Desc: displays set of scatterplots for multiple columns or features of a dataframe.
+    pass in list of column names (x_cols) to plot against y-target (or another feature for 
+    multicollinearity analysis)
+    
+    args: data, x_cols, y
+    
+    kwargs: color (default is magenta (#C839C5))
+    
+    example:
+    
+    x_cols = ['col1', 'col2', 'col3']
+    y = 'col4'
+    
+    sub_scatter(df, x_cols, y)
+    
+    example with color kwarg:
+    sub_scatter(df, x_cols, y, color=#)
+    
+    alternatively you can pass the column list and target directly:
+    sub_scatter(df, ['col1', 'col2', 'col3'], 'price')
+
+    """   
+    if nrows == None:
+        nrows = 1
+    if ncols == None:
+        ncols = 3
+    if color == None:
+        color = '#C839C5'
+    
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(16,4))
+    for x_col, ax in zip(x_cols, axes):
+        data.plot(kind='scatter', x=x_col, y=y, ax=ax, color=color)
+        ax.set_title(x_col.capitalize() + " vs. " + y.capitalize())
+```
+
+
+```python
+# SUB_HISTS() function: plot histogram subplots
+def sub_hists(data):
+    plt.style.use('fivethirtyeight')
+    for column in data.describe():
+        fig = plt.figure(figsize=(12, 5))
+        
+        ax = fig.add_subplot(121)
+        ax.hist(data[column], density=True, label = column+' histogram', bins=20)
+        ax.set_title(column.capitalize())
+
+        ax.legend()
+        
+        fig.tight_layout()
+```
+
+
+```python
+# PLOT_REG() function: plot regression
+def plot_reg(data, feature, target):
+    sns.regplot(x=feature, y=target, data=data)
+    plt.show()
+```
+
+## Import Data
+
+
+```python
+# import dataset and review data types, columns, variables
+df = pd.read_csv('kc_house_data.csv') 
 df.head()
 ```
 
@@ -286,198 +588,13 @@ df.head()
 
 
 ---
-# SCRUB
+# SCRUB 
 
-**Q1: How should we address datatype of each feature to prepare it for EDA?**
-    + 1. find and replace nulls
-    + 2. re-cast datatypes (continuous, binary, categorical)
-    + 3. check for duplicate observations (rows)
-    + 4. preliminary analysis and visualizations
-    + 5. decide which columns and rows to drop before EDA
-
-    Custom Functions:
-    * hot_stats()
-    * null_hunter()
-    * corr_dict()
-    * sub_scatter()
-
-
-```python
-# HOT_STATS() function: display statistical summaries of a feature column
-def hot_stats(data, column, verbose=False, target=None):
-    """
-    v.1.0
-    Scans the values of a column within a dataframe
-    and displays its datatype, nulls (incl. pct of total),
-    unique values, non-null value counts, as well as
-    statistical info if the datatype is numeric.
-
-    Args:
-    data: a dataframe
-
-    column: a column within the data you want to scan *should be inside quotes ''
-
-    KWargs:
-
-    verbose: (optional) accepts a boolean (default=False).
-              verbose=True will display all unique values found.   
-
-    target: (optional) accepts column name similar to column arg.
-             calculates correlation coefficient between feature and target using pandas data.corr() function.
-
-    example:
-    hot_stats(df, 'price')
-    data = df
-    column = 'price'
-
-    Developer notes: additional features to add to v2 might
-    include:
-    -mode finder (frequency dict)
-    -more functionality for string objects
-    -side by side comparison between two features
-    -OR ability to pass multiple columns at once and display all
-    """
-    # assigns variables to call later as shortcuts
-    feature = data[column]
-    rdash = "-------->"
-    ldash = "<--------"
-
-    # figure out which hot_stats to display based on dtype
-    if feature.dtype == 'float':
-        hot_stats = feature.describe().round(2)
-    elif feature.dtype == 'int':
-        hot_stats = feature.describe()
-    elif feature.dtype == 'object' or 'category':
-        hot_stats = feature.agg(['min','median','max'])
-    else:
-        hot_stats = None
-
-    # display statistics (returns different info depending on datatype)
-    print(rdash)
-    print("HOT!STATS")
-    print(ldash)
-    # display column name formatted with underline
-    print(f"\n{feature.name.upper()}")  
-    # display the data type
-    print(f"Data Type: {feature.dtype}\n")
-    print(hot_stats)
-
-
-    # find nulls and display total count and percentage
-    if feature.isna().sum() > 0:  
-        print(f"Found\n{feature.isna().sum()} Nulls out of {len(feature)}({round(feature.isna().sum()/len(feature)*100,2)}%)\n")
-    else:
-        print("\nNo Nulls Found!\n")
-
-    # display value counts (non-nulls)
-    print(f"Non-Null Value Counts:\n{feature.value_counts()}\n")
-
-    # display count of unique values
-    print(f"# Unique Values: {len(feature.unique())}\n")
-    # displays all unique values found if verbose set to true
-    if verbose == True:
-        print(f"Unique Values:\n {feature.unique()}\n")
-
-    # display correlation coefficient with target
-    if target != None:
-        corr = feature.corr(data[target]).round(4)
-        print(f"Correlation with {target.upper()}: {corr}")
-```
-
-
-```python
-# NULL_HUNTER() function: display Null counts per column/feature
-def null_hunter(df):
-    print(f"Columns with Null Values")
-    print("------------------------")
-    for column in df:
-        if df[column].isna().sum() > 0:
-            print(f"{df[column].name}: \n{df[column].isna().sum()} out of {len(df[column])} ({round(df[column].isna().sum()/len(df[column])*100,2)}%)\n")
-```
-
-
-```python
-# CORRCOEF_DICT() function: calculates correlation coefficients assoc. with features and stores in a dictionary
-def corr_dict(X, y):
-    corr_coefs = []
-    for x in X:
-        corr = df[x].corr(df[y])
-        corr_coefs.append(corr)
-
-    corr_dict = {}
-
-    for x, c in zip(X, corr_coefs):
-        corr_dict[x] = c
-    return corr_dict
-```
-
-
-```python
-# SUB_SCATTER() function: pass list of features (x_cols) and compare against target (or another feature)
-def sub_scatter(data, x_cols, y, color=None, nrows=None, ncols=None):
-    """
-    Desc: displays set of scatterplots for multiple columns or features of a dataframe.
-    pass in list of column names (x_cols) to plot against y-target (or another feature for
-    multicollinearity analysis)
-
-    args: data, x_cols, y
-
-    kwargs: color (default is magenta (#C839C5))
-
-    example:
-
-    x_cols = ['col1', 'col2', 'col3']
-    y = 'col4'
-
-    sub_scatter(df, x_cols, y)
-
-    example with color kwarg:
-    sub_scatter(df, x_cols, y, color=#)
-
-    alternatively you can pass the column list and target directly:
-    sub_scatter(df, ['col1', 'col2', 'col3'], 'price')
-
-    """   
-    if nrows == None:
-        nrows = 1
-    if ncols == None:
-        ncols = 3
-    if color == None:
-        color = '#C839C5'
-
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(16,4))
-    for x_col, ax in zip(x_cols, axes):
-        data.plot(kind='scatter', x=x_col, y=y, ax=ax, color=color)
-```
-
-
-```python
-# SUB_HISTS() function: plot histogram subplots
-def sub_hists(data):
-    plt.style.use('fivethirtyeight')
-    for column in data.describe():
-        fig = plt.figure(figsize=(12, 5))
-
-        ax = fig.add_subplot(121)
-        ax.hist(data[column], density=True, label = column+' histogram', bins=20)
-        ax.set_title(column.capitalize())
-
-        ax.legend()
-
-        fig.tight_layout()
-```
-
-
-```python
-# PLOT_REG() function: plot regression
-def plot_reg(data, feature, target):
-    sns.regplot(x=feature, y=target, data=data)
-    plt.show()
-```
+Clean and organize the data.
 
 **FIRST GLANCE - Items to note**
     * There are 2 object datatypes that contain numeric values : 'date', 'sqft_basement'
-    * The total value count is 21597. Some columns appear to be missing a substantial amount of data
+    * The total value count is 21597. Some columns appear to be missing a substantial amount of data 
     (waterfront and yr_renovated).
 
 
@@ -538,30 +655,8 @@ QUALITY
 ANALYTICS
 **date, id, view**
 
-## Null Hunting
-
-    Let's start by hunting for nulls and then decide how to address each one (remove or replace)
-    in a manner that will not skew our analysis.
-
-    NOTES:
-      Drop null rows or columns as appropriate
-      * df.isna().sum()
-      * df.drop()
-      * df.drop(['col1','col2'],axis=1)
-
-      Coarse Binning NUMERICAL Data
-      * replace with median or bin/convert to categorical
-           * bin yr_built
-           * bin sqft_basement
-           * bin sqft_above
-
-      CATEGORICAL data:
-      * make NaN own category OR replace with most common category
-      * Fill in null values and recast variables for EDA
-           * zipcode --> coded
-           * View --> category
-           * Waterfront --> boolean
-           * yr_renovated --> is_reno (boolean)
+## Missing Values
+Find and replace missing values using null_hunter() function.
 
 
 ```python
@@ -571,26 +666,24 @@ null_hunter(df)
 
     Columns with Null Values
     ------------------------
-    waterfront:
+    waterfront: 
     2376 out of 21597 (11.0%)
-
-    view:
+    
+    view: 
     63 out of 21597 (0.29%)
-
-    yr_renovated:
+    
+    yr_renovated: 
     3842 out of 21597 (17.79%)
-
+    
 
 
 Before deciding how to handle nulls in the 3 columns above, let's take a closer look at each one and go from there.
 
-## Data Casting (hot_stats)
+## Data Casting
 
-### Binaries (Boolean)
+Identify/Address characteristics of each variable (numeric vs categorical)
 
-Although waterfront, yr_renovated, and view all contain numeric values, if we consider what each of them represents, they're more likely to be useful to the analysis if we convert them into binaries (is renovated or not, is waterfront or not, was viewed or not).
-
-#### ['waterfront']
+### ['waterfront']
 
 
 ```python
@@ -600,10 +693,10 @@ hot_stats(df, 'waterfront')
     -------->
     HOT!STATS
     <--------
-
+    
     WATERFRONT
     Data Type: float64
-
+    
     count    19221.00
     mean         0.01
     std          0.09
@@ -612,23 +705,26 @@ hot_stats(df, 'waterfront')
     50%          0.00
     75%          0.00
     max          1.00
-    Name: waterfront, dtype: float64
+    Name: waterfront, dtype: float64 
+    
+    à-la-Mode: 
+    0    0.0
+    dtype: float64
+    
     Found
     2376 Nulls out of 21597(11.0%)
-
+    
     Non-Null Value Counts:
     0.0    19075
     1.0      146
     Name: waterfront, dtype: int64
-
+    
     # Unique Values: 3
-
+    
 
 
 
 ```python
-# This really should be a boolean (property either is waterfront or is not waterfront)
-
 # Fill nulls with most common value (0.0) # float value
 df['waterfront'].fillna(0.0, inplace=True)
 #  verify changes
@@ -644,10 +740,10 @@ df['waterfront'].isna().sum()
 
 
 ```python
-# Convert datatype to boolean (values can be either 0 or 1)
-df['is_waterfront'] = df['waterfront'].astype('bool')
+# Convert datatype to boolean (values can be either 0 (not waterfront) or 1(is waterfront)
+df['is_wf'] = df['waterfront'].astype('bool')
 # verify
-df['is_waterfront'].value_counts()
+df['is_wf'].value_counts()
 ```
 
 
@@ -655,11 +751,11 @@ df['is_waterfront'].value_counts()
 
     False    21451
     True       146
-    Name: is_waterfront, dtype: int64
+    Name: is_wf, dtype: int64
 
 
 
-#### ['yr_renovated']
+### ['yr_renovated']
 
 
 ```python
@@ -669,10 +765,10 @@ hot_stats(df, 'yr_renovated')
     -------->
     HOT!STATS
     <--------
-
+    
     YR_RENOVATED
     Data Type: float64
-
+    
     count    17755.00
     mean        83.64
     std        399.95
@@ -681,10 +777,15 @@ hot_stats(df, 'yr_renovated')
     50%          0.00
     75%          0.00
     max       2015.00
-    Name: yr_renovated, dtype: float64
+    Name: yr_renovated, dtype: float64 
+    
+    à-la-Mode: 
+    0    0.0
+    dtype: float64
+    
     Found
     3842 Nulls out of 21597(17.79%)
-
+    
     Non-Null Value Counts:
     0.0       17011
     2014.0       73
@@ -698,14 +799,14 @@ hot_stats(df, 'yr_renovated')
     1951.0        1
     1954.0        1
     Name: yr_renovated, Length: 70, dtype: int64
-
+    
     # Unique Values: 71
-
+    
 
 
 
 ```python
-# This feature is also heavily skewed with zero values.
+# This feature is also heavily skewed with zero values. 
 # It should also be treated as a boolean since a property is either renovated or it's not).
 
 # fill nulls with most common value (0)
@@ -727,12 +828,8 @@ df['yr_renovated'].isna().sum()
 # Use numpy arrays to create binarized column 'is_renovated'
 is_renovated = np.array(df['yr_renovated'])
 is_renovated[is_renovated >= 1] = 1
-df['is_renovated'] = is_renovated
-```
-
-
-```python
-df['is_renovated'].value_counts()
+df['is_ren'] = is_renovated
+df['is_ren'].value_counts()
 ```
 
 
@@ -740,17 +837,17 @@ df['is_renovated'].value_counts()
 
     0.0    20853
     1.0      744
-    Name: is_renovated, dtype: int64
+    Name: is_ren, dtype: int64
 
 
 
 
 ```python
 # Convert to boolean
-df['is_renovated'] = df['is_renovated'].astype('bool')
+df['is_ren'] = df['is_ren'].astype('bool')
 
 # verify
-df['is_renovated'].value_counts()
+df['is_ren'].value_counts()
 ```
 
 
@@ -758,11 +855,11 @@ df['is_renovated'].value_counts()
 
     False    20853
     True       744
-    Name: is_renovated, dtype: int64
+    Name: is_ren, dtype: int64
 
 
 
-#### ['view']
+### ['view']
 
 
 ```python
@@ -772,10 +869,10 @@ hot_stats(df, 'view')
     -------->
     HOT!STATS
     <--------
-
+    
     VIEW
     Data Type: float64
-
+    
     count    21534.00
     mean         0.23
     std          0.77
@@ -784,10 +881,15 @@ hot_stats(df, 'view')
     50%          0.00
     75%          0.00
     max          4.00
-    Name: view, dtype: float64
+    Name: view, dtype: float64 
+    
+    à-la-Mode: 
+    0    0.0
+    dtype: float64
+    
     Found
     63 Nulls out of 21597(0.29%)
-
+    
     Non-Null Value Counts:
     0.0    19422
     2.0      957
@@ -795,16 +897,16 @@ hot_stats(df, 'view')
     1.0      330
     4.0      317
     Name: view, dtype: int64
-
+    
     # Unique Values: 6
-
+    
 
 
 
 ```python
 # Once again, almost all values are 0 .0
 
-# replace nulls with most common value (0).
+# replace nulls with most common value (0). 
 df['view'].fillna(0, inplace=True)
 
 #verify
@@ -826,51 +928,177 @@ Since view has a finite set of values (0 to 4) we could assign category codes. H
 df['viewed'] = df['view'].astype('bool')
 
 # verify
-df['viewed'].dtype
+df['viewed'].value_counts()
 ```
 
 
 
 
-    dtype('bool')
+    False    19485
+    True      2112
+    Name: viewed, dtype: int64
 
 
 
-
-```python
-binaries = ['is_waterfront', 'is_renovated', 'viewed']
-
-# check correlation coefficients
-corr_dict(binaries, 'price')
-```
-
-
-
-
-    {'is_waterfront': 0.2643062804831157,
-     'is_renovated': 0.11754308700194362,
-     'viewed': 0.3562431893938032}
-
-
-
-None of these correlation values look strong enough to be predictive of price (min threshold > 0.5, ideally 0.7)
-
-### Categories - Nominal
-
-#### ['floors']
+### ['sqft_basement']
 
 
 ```python
-hot_stats(df, 'floors', target='price')
+hot_stats(df, 'sqft_basement')
 ```
 
     -------->
     HOT!STATS
     <--------
+    
+    SQFT_BASEMENT
+    Data Type: object
+    
+    min    0.0
+    max      ?
+    Name: sqft_basement, dtype: object 
+    
+    à-la-Mode: 
+    0    0.0
+    dtype: object
+    
+    
+    No Nulls Found!
+    
+    Non-Null Value Counts:
+    0.0       12826
+    ?           454
+    600.0       217
+    500.0       209
+    700.0       208
+              ...  
+    861.0         1
+    652.0         1
+    1990.0        1
+    2190.0        1
+    2300.0        1
+    Name: sqft_basement, Length: 304, dtype: int64
+    
+    # Unique Values: 304
+    
 
+
+
+```python
+# Note the majority of the values are zero...we could bin this as a binary 
+# where the property either has a basement or does not...
+
+# First replace '?'s with string value '0.0'
+df['sqft_basement'].replace(to_replace='?', value='0.0', inplace=True)
+```
+
+
+```python
+# and change datatype to float.
+df['sqft_basement'] = df['sqft_basement'].astype('float')
+```
+
+
+```python
+hot_stats(df, 'sqft_basement', t='price')
+```
+
+    -------->
+    HOT!STATS
+    <--------
+    
+    SQFT_BASEMENT
+    Data Type: float64
+    
+    count    21597.00
+    mean       285.72
+    std        439.82
+    min          0.00
+    25%          0.00
+    50%          0.00
+    75%        550.00
+    max       4820.00
+    Name: sqft_basement, dtype: float64 
+    
+    à-la-Mode: 
+    0    0.0
+    dtype: float64
+    
+    
+    No Nulls Found!
+    
+    Non-Null Value Counts:
+    0.0       13280
+    600.0       217
+    500.0       209
+    700.0       208
+    800.0       201
+              ...  
+    915.0         1
+    295.0         1
+    1281.0        1
+    2130.0        1
+    906.0         1
+    Name: sqft_basement, Length: 303, dtype: int64
+    
+    # Unique Values: 303
+    
+    Correlation with PRICE: 0.3211
+
+
+
+```python
+df['basement'] = df['sqft_basement'].astype('bool')
+```
+
+
+```python
+df['basement'].value_counts()
+```
+
+
+
+
+    False    13280
+    True      8317
+    Name: basement, dtype: int64
+
+
+
+
+```python
+corrs = ['is_wf', 'is_ren', 'viewed', 'basement']
+
+# check correlation coefficients
+corr_dict(corrs, 'price')
+```
+
+
+
+
+    {'is_wf': 0.2643062804831158,
+     'is_ren': 0.11754308700194353,
+     'viewed': 0.3562431893938023,
+     'basement': 0.17826351932053328}
+
+
+
+None of these correlation values look strong enough to be predictive of price (min threshold > 0.5, ideally 0.7)
+
+### ['floors']
+
+
+```python
+hot_stats(df, 'floors', t='price')
+```
+
+    -------->
+    HOT!STATS
+    <--------
+    
     FLOORS
     Data Type: float64
-
+    
     count    21597.00
     mean         1.49
     std          0.54
@@ -879,10 +1107,15 @@ hot_stats(df, 'floors', target='price')
     50%          1.50
     75%          2.00
     max          3.50
-    Name: floors, dtype: float64
-
+    Name: floors, dtype: float64 
+    
+    à-la-Mode: 
+    0    1.0
+    dtype: float64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     1.0    10673
     2.0     8235
@@ -891,43 +1124,28 @@ hot_stats(df, 'floors', target='price')
     2.5      161
     3.5        7
     Name: floors, dtype: int64
-
+    
     # Unique Values: 6
-
+    
     Correlation with PRICE: 0.2568
-
-
-Although you could theoretically have any number of floors, this really should be treated as a category (i.e. contains finite possible values). Assuming this is probably true for the other interior features (bedrooms, bathrooms). Let's look at a scatter plot using the sub_scatter function.
-
-
-```python
-# sub_scatter() creates scatter plots for multiple features side by side.
-y = 'price'
-x_cols = ['floors','bedrooms', 'bathrooms']
-
-sub_scatter(df, x_cols, y)
-```
-
-
-![png](output/output_44_0.png)
 
 
 Bathrooms appears to have a very linear relationship with price. Bedrooms is somewhat linear up to a certain point. Let's look at the hot stats for both.
 
-#### ['bedrooms']
+### ['bedrooms']
 
 
 ```python
-hot_stats(df, 'bedrooms', target='price')
+hot_stats(df, 'bedrooms', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     BEDROOMS
     Data Type: int64
-
+    
     count    21597.000000
     mean         3.373200
     std          0.926299
@@ -936,10 +1154,15 @@ hot_stats(df, 'bedrooms', target='price')
     50%          3.000000
     75%          4.000000
     max         33.000000
-    Name: bedrooms, dtype: float64
-
+    Name: bedrooms, dtype: float64 
+    
+    à-la-Mode: 
+    0    3
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     3     9824
     4     6882
@@ -954,28 +1177,26 @@ hot_stats(df, 'bedrooms', target='price')
     11       1
     33       1
     Name: bedrooms, dtype: int64
-
+    
     # Unique Values: 12
-
+    
     Correlation with PRICE: 0.3088
 
 
-Not a significant correlation between bedrooms and price.
-
-#### ['bathrooms']
+### ['bathrooms']
 
 
 ```python
-hot_stats(df, 'bathrooms', target='price')
+hot_stats(df, 'bathrooms', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     BATHROOMS
     Data Type: float64
-
+    
     count    21597.00
     mean         2.12
     std          0.77
@@ -984,10 +1205,15 @@ hot_stats(df, 'bathrooms', target='price')
     50%          2.25
     75%          2.50
     max          8.00
-    Name: bathrooms, dtype: float64
-
+    Name: bathrooms, dtype: float64 
+    
+    à-la-Mode: 
+    0    2.5
+    dtype: float64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     2.50    5377
     1.00    3851
@@ -1019,13 +1245,48 @@ hot_stats(df, 'bathrooms', target='price')
     7.50       1
     7.75       1
     Name: bathrooms, dtype: int64
-
+    
     # Unique Values: 29
-
+    
     Correlation with PRICE: 0.5259
 
 
-Bathrooms is the only feature showing correlation over the 0.5 threshold. We can probably drop the other two as predictor candidates, especially if they exhbit multicollinearity (we'll explore that in more detail later).
+Bathrooms is the only feature showing correlation over the 0.5 threshold.
+
+The column-like distributions of these features in the scatterplots below indicate the values are categorical.
+
+
+```python
+# sub_scatter() creates scatter plots for multiple features side by side.
+y = 'price'
+x_cols = ['floors','bedrooms', 'bathrooms']
+
+sub_scatter(df, x_cols, y)
+```
+
+
+![png](output_55_0.png)
+
+
+Looking at each one more closely using seaborn's catplot:
+
+
+```python
+for col in x_cols:
+    sns.catplot(x=col, y='price', height=10, legend=True, data=df)
+```
+
+
+![png](output_57_0.png)
+
+
+
+![png](output_57_1.png)
+
+
+
+![png](output_57_2.png)
+
 
 
 ```python
@@ -1039,34 +1300,24 @@ corr_thresh_dict
 
 
 
-    {'bathrooms': 0.5259056214532012}
+    {'bathrooms': 0.5259056214532007}
 
 
 
-
-```python
-# Create category columns for interior features: floors, bedrooms, and bathrooms
-df['floor_cat'] = df['floors'].astype('category')
-df['bedroom_cat'] = df['bedrooms'].astype('category')
-df['bathroom_cat'] = df['bathrooms'].astype('category')
-```
-
-### Categories - Ordinal
-
-#### ['condition']
+### ['condition']
 
 
 ```python
-hot_stats(df, 'condition', target='price')
+hot_stats(df, 'condition', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     CONDITION
     Data Type: int64
-
+    
     count    21597.000000
     mean         3.409825
     std          0.650546
@@ -1075,10 +1326,15 @@ hot_stats(df, 'condition', target='price')
     50%          3.000000
     75%          4.000000
     max          5.000000
-    Name: condition, dtype: float64
-
+    Name: condition, dtype: float64 
+    
+    à-la-Mode: 
+    0    3
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     3    14020
     4     5677
@@ -1086,47 +1342,45 @@ hot_stats(df, 'condition', target='price')
     2      170
     1       29
     Name: condition, dtype: int64
-
+    
     # Unique Values: 5
-
+    
     Correlation with PRICE: 0.0361
 
 
 
 ```python
-# Condition should be treated as ordinal since there is a relationship between
-# the values (ranking scale from 1 to 5)
-cat_dtype = pd.api.types.CategoricalDtype(categories=[1, 2, 3, 4, 5], ordered=True)
-
-# Recast condition as an ordered category
-df['condition_cat'] = df['condition'].astype(cat_dtype)
-
-# verify
-df['condition_cat'].dtype
+sns.catplot(x='condition', y='price', data=df, height=8)
 ```
 
 
 
 
-    CategoricalDtype(categories=[1, 2, 3, 4, 5], ordered=True)
+    <seaborn.axisgrid.FacetGrid at 0x1c2075b358>
 
 
 
-#### ['grade']
+
+![png](output_61_1.png)
+
+
+Positive linear correlation between price and condition up to a point, but with diminishing returns.
+
+### ['grade']
 
 
 ```python
 # View grade stats
-hot_stats(df, 'grade', target='price')
+hot_stats(df, 'grade', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     GRADE
     Data Type: int64
-
+    
     count    21597.000000
     mean         7.657915
     std          1.173200
@@ -1135,10 +1389,15 @@ hot_stats(df, 'grade', target='price')
     50%          7.000000
     75%          8.000000
     max         13.000000
-    Name: grade, dtype: float64
-
+    Name: grade, dtype: float64 
+    
+    à-la-Mode: 
+    0    7
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     7     8974
     8     6065
@@ -1152,76 +1411,43 @@ hot_stats(df, 'grade', target='price')
     13      13
     3        1
     Name: grade, dtype: int64
-
+    
     # Unique Values: 11
-
+    
     Correlation with PRICE: 0.668
 
 
 
 ```python
-corrs.append('grade')
-
-corr_thresh_dict = corr_dict(corrs, 'price')
-
-corr_thresh_dict
+x_cols = ['condition', 'grade']
+for col in x_cols:
+    sns.catplot(x=col, y='price', height=10, legend=True, data=df)
 ```
 
 
-
-
-    {'bathrooms': 0.5259056214532012, 'grade': 0.6679507713876452}
+![png](output_65_0.png)
 
 
 
-    Condition is useless, but grade is our highest coefficient so far at 0.68!
-    We can also see (below) a clear linear relationship between grade and price.
+![png](output_65_1.png)
 
 
-```python
-# visualize on a scatter plot
-sub_scatter(df, ['condition', 'grade'], 'price', nrows=1, ncols=2)
-```
+Grade shows a relatively strong positive correlation with price.
 
-
-![png](output/output_62_0.png)
-
+### ['yr_built'] 
 
 
 ```python
-# Grade should also be treated as an ordinal category
-
-# create ranking scale from 1 to 13
-cat_dtype = pd.api.types.CategoricalDtype(categories=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ordered=True)
-
-# Create new ordered category column for grade
-df['grade_cat'] = df['grade'].astype(cat_dtype)
-
-# verify
-df['grade_cat'].dtype
-```
-
-
-
-
-    CategoricalDtype(categories=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ordered=True)
-
-
-
-#### ['yr_built']
-
-
-```python
-hot_stats(df, 'yr_built', target='price')
+hot_stats(df, 'yr_built', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     YR_BUILT
     Data Type: int64
-
+    
     count    21597.000000
     mean      1970.999676
     std         29.375234
@@ -1230,32 +1456,37 @@ hot_stats(df, 'yr_built', target='price')
     50%       1975.000000
     75%       1997.000000
     max       2015.000000
-    Name: yr_built, dtype: float64
-
+    Name: yr_built, dtype: float64 
+    
+    à-la-Mode: 
+    0    2014
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     2014    559
     2006    453
     2005    450
     2004    433
     2003    420
-           ...
+           ... 
     1933     30
     1901     29
     1902     27
     1935     24
     1934     21
     Name: yr_built, Length: 116, dtype: int64
-
+    
     # Unique Values: 116
-
+    
     Correlation with PRICE: 0.054
 
 
 
 ```python
-# Let's look at the data distribution of yr_built values
+# Let's look at the data distribution of yr_built values 
 
 fig, ax = plt.subplots()
 df['yr_built'].hist(bins=10, color='#68FDFE', edgecolor='black', grid=True, alpha=0.6)
@@ -1269,13 +1500,10 @@ ax.set_ylabel('Frequency', fontsize=12);
 ```
 
 
-![png](output/output_66_0.png)
+![png](output_69_0.png)
 
 
-    Most houses were built during the second half of the century (after 1950)
-
-    We'll use adaptive binning based on quantiles for yr_built in order to create
-    a more normal distribution.
+Most houses were built during the second half of the century (after 1950). We'll use adaptive binning based on quantiles for yr_built in order to create a more normal distribution.
 
 
 ```python
@@ -1302,12 +1530,12 @@ quantiles # 1900, 1951, 1975, 1997, 2015
 
 ```python
 # Bin the years in to ranges based on the quantiles.
-# label the bins for each value
-# store the yr_range and its corresponding yr_label as new columns in df
-
 yb_bins = [1900, 1951, 1975, 1997, 2015]
 
+# label the bins for each value 
 yb_labels = [1, 2, 3, 4]
+
+# store the yr_range and its corresponding yr_label as new columns in df
 
 # create a new column for the category range values
 df['yb_range'] = pd.cut(df['yr_built'], bins=yb_bins)
@@ -1318,7 +1546,7 @@ df['yb_cat'] = pd.cut(df['yr_built'], bins=yb_bins, labels=yb_labels)
 
 
 ```python
-# view the binned features corresponding to each yr_built
+# view the binned features corresponding to each yr_built 
 df[['yr_built','yb_cat', 'yb_range']].iloc[9003:9007] # picking a random index location
 ```
 
@@ -1399,7 +1627,7 @@ for quantile in quantiles:
 ```
 
 
-![png](output/output_71_0.png)
+![png](output_74_0.png)
 
 
 
@@ -1438,10 +1666,26 @@ ax.set_ylabel('Frequency', fontsize=12)
 
 
 
-![png](output/output_73_1.png)
+![png](output_76_1.png)
 
 
-#### ['zipcode']
+
+```python
+sns.catplot(x='yb_cat', y='price', data=df, height=8)
+```
+
+
+
+
+    <seaborn.axisgrid.FacetGrid at 0x1c211c2780>
+
+
+
+
+![png](output_77_1.png)
+
+
+###  ['zipcode']
 
 
 ```python
@@ -1451,10 +1695,10 @@ hot_stats(df, 'zipcode')
     -------->
     HOT!STATS
     <--------
-
+    
     ZIPCODE
     Data Type: int64
-
+    
     count    21597.000000
     mean     98077.951845
     std         53.513072
@@ -1463,32 +1707,36 @@ hot_stats(df, 'zipcode')
     50%      98065.000000
     75%      98118.000000
     max      98199.000000
-    Name: zipcode, dtype: float64
-
+    Name: zipcode, dtype: float64 
+    
+    à-la-Mode: 
+    0    98103
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     98103    602
     98038    589
     98115    583
     98052    574
     98117    553
-            ...
+            ... 
     98102    104
     98010    100
     98024     80
     98148     57
     98039     50
     Name: zipcode, Length: 70, dtype: int64
-
+    
     # Unique Values: 70
-
+    
 
 
 
 ```python
-# There are 70 unique zipcode values
-# Let's look at the data distribution of zipcode values
+# Let's look at the data distribution of the 70 unique zipcode values 
 fig, ax = plt.subplots()
 df['zipcode'].hist(bins=7, color='#67F86F',
 edgecolor='black', grid=True)
@@ -1505,12 +1753,12 @@ ax.set_ylabel('Frequency', fontsize=12)
 
 
 
-![png](output/output_76_1.png)
+![png](output_80_1.png)
 
 
 
 ```python
-# Let’s define a binning scheme with custom ranges for the zipcode values
+# Let’s define a binning scheme with custom ranges for the zipcode values 
 # The bins will be created based on quantiles
 
 quantile_list = [0, .25, .5, .75, 1.]
@@ -1534,7 +1782,7 @@ quantiles # 98001, 98033, 98065, 98118, 98199
 
 
 ```python
-# Now we can label the bins for each value and store both the bin range
+# Now we can label the bins for each value and store both the bin range 
 # and its corresponding label.
 
 zip_bins = [98000, 98033, 98065, 98118, 98200]
@@ -1545,7 +1793,7 @@ df['zip_range'] = pd.cut(df['zipcode'], bins=zip_bins)
 
 df['zip_cat'] = pd.cut(df['zipcode'], bins=zip_bins, labels=zip_labels)
 
-# view the binned features
+# view the binned features 
 df[['zipcode','zip_cat', 'zip_range']].iloc[9000:9005] # pick a random index
 ```
 
@@ -1628,122 +1876,32 @@ for quantile in quantiles:
 ```
 
 
-![png](output/output_79_0.png)
-
-
-#### ['lat']  ['long']
-
-The coordinates for latitude and longitude are not going to be useful to us as far as regression models since we already have zipcodes as a geographic identifier (i.e. they'd be redundant). However, we may want to use them for creating some lmplots when we get to EDA.
-
-
-```python
-#%pip install zipcode
-```
-
-    [33mWARNING: The directory '/Users/hakkeray/Library/Caches/pip/http' or its parent directory is not owned by the current user and the cache has been disabled. Please check the permissions and owner of that directory. If executing pip with sudo, you may want sudo's -H flag.[0m
-    [33mWARNING: The directory '/Users/hakkeray/Library/Caches/pip' or its parent directory is not owned by the current user and caching wheels has been disabled. check the permissions and owner of that directory. If executing pip with sudo, you may want sudo's -H flag.[0m
-    Requirement already satisfied: zipcode in /Users/hakkeray/opt/anaconda3/envs/learn-env/lib/python3.6/site-packages (4.0.0)
-    Requirement already satisfied: haversine in /Users/hakkeray/opt/anaconda3/envs/learn-env/lib/python3.6/site-packages (from zipcode) (2.1.2)
-    Requirement already satisfied: SQLAlchemy in /Users/hakkeray/opt/anaconda3/envs/learn-env/lib/python3.6/site-packages (from zipcode) (1.3.8)
-    Note: you may need to restart the kernel to use updated packages.
+![png](output_83_0.png)
 
 
 
 ```python
-# pypi package for retrieving information based on us zipcodes
-from uszipcode import SearchEngine
-search = SearchEngine(simple_zipcode=True) # set simple_zipcode=False to use rich info database
-zipcode = search.by_zipcode("98199")
-zipcode
+sns.catplot(x='zipcode', y='price', data=df, height=10)
 ```
 
 
-    ---------------------------------------------------------------------------
-
-    ModuleNotFoundError                       Traceback (most recent call last)
-
-    <ipython-input-50-77820cab01a1> in <module>
-          1 # pypi package for retrieving information based on us zipcodes
-    ----> 2 from uszipcode import SearchEngine
-          3 search = SearchEngine(simple_zipcode=True) # set simple_zipcode=False to use rich info database
-          4 zipcode = search.by_zipcode("98199")
-          5 zipcode
 
 
-    ModuleNotFoundError: No module named 'uszipcode'
+    <seaborn.axisgrid.FacetGrid at 0x1c206d7c18>
 
 
 
-```python
 
-```
-
-
-```python
-
-SimpleZipcode(zipcode=u'10001', zipcode_type=u'Standard', major_city=u'New York', post_office_city=u'New York, NY', common_city_list=[u'New York'], county=u'New York County', state=u'NY', lat=40.75, lng=-73.99, timezone=u'Eastern', radius_in_miles=0.9090909090909091, area_code_list=[u'718', u'917', u'347', u'646'], population=21102, population_density=33959.0, land_area_in_sqmi=0.62, water_area_in_sqmi=0.0, housing_units=12476, occupied_housing_units=11031, median_home_value=650200, median_household_income=81671, bounds_west=-74.008621, bounds_east=-73.984076, bounds_north=40.759731, bounds_south=40.743451)
-
->>> zipcode.values() # to list
-[u'10001', u'Standard', u'New York', u'New York, NY', [u'New York'], u'New York County', u'NY', 40.75, -73.99, u'Eastern', 0.9090909090909091, [u'718', u'917', u'347', u'646'], 21102, 33959.0, 0.62, 0.0, 12476, 11031, 650200, 81671, -74.008621, -73.984076, 40.759731, 40.743451]
-
->>> zipcode.to_dict() # to dict
-{'housing_units': 12476, 'post_office_city': u'New York, NY', 'bounds_east': -73.984076, 'county': u'New York County', 'population_density': 33959.0, 'radius_in_miles': 0.9090909090909091, 'timezone': u'Eastern', 'lng': -73.99, 'common_city_list': [u'New York'], 'zipcode_type': u'Standard', 'zipcode': u'10001', 'state': u'NY', 'major_city': u'New York', 'population': 21102, 'bounds_west': -74.008621, 'land_area_in_sqmi': 0.62, 'lat': 40.75, 'median_household_income': 81671, 'occupied_housing_units': 11031, 'bounds_north': 40.759731, 'bounds_south': 40.743451, 'area_code_list': [u'718', u'917', u'347', u'646'], 'median_home_value': 650200, 'water_area_in_sqmi': 0.0}
-
->>> zipcode.to_json() # to json
-{
-    "zipcode": "10001",
-    "zipcode_type": "Standard",
-    "major_city": "New York",
-    "post_office_city": "New York, NY",
-    "common_city_list": [
-        "New York"
-    ],
-    "county": "New York County",
-    "state": "NY",
-    "lat": 40.75,
-    "lng": -73.99,
-    "timezone": "Eastern",
-    "radius_in_miles": 0.9090909090909091,
-    "area_code_list": [
-        "718",
-        "917",
-        "347",
-        "646"
-    ],
-    "population": 21102,
-    "population_density": 33959.0,
-    "land_area_in_sqmi": 0.62,
-    "water_area_in_sqmi": 0.0,
-    "housing_units": 12476,
-    "occupied_housing_units": 11031,
-    "median_home_value": 650200,
-    "median_household_income": 81671,
-    "bounds_west": -74.008621,
-    "bounds_east": -73.984076,
-    "bounds_north": 40.759731,
-    "bounds_south": 40.743451
-}
-```
+![png](output_84_1.png)
 
 
-```python
-from uszipcode import Zipcode
-# Search zipcode within 30 miles, ordered from closest to farthest
-result = search.by_coordinates(39.122229, -77.133578, radius=30, returns=5)
-len(res) # by default 5 results returned
+> Some zip codes may have higher priced homes than others, so it's hard to determine from the catplot how this could be used as a predictor. We'll have to explore this variable using geographic plots to see how the distributions trend on a map (i.e. proximity).
 
-for zipcode in result:
- # do whatever you want...
-```
+### ['lat']  ['long']
 
----
-### DateTime
-We need to convert the datatypes of numeric values currently stored as objects. This will allow us to include them in the preliminary exploration and analysis.
+> The coordinates for latitude and longitude are not going to be useful to us as far as regression models since we already have zipcodes as a geographic identifier. However we can put them to use for our geographic plotting.
 
-    * date -> recast as datetime
-    * sqft_basement -> recast as float
-
-#### ['date']
+### ['date'] 
 convert to datetime
 
 
@@ -1761,175 +1919,59 @@ df['date'].dtype
 
 
 ```python
-hot_stats(df, 'date')
+hot_stats(df, 'date', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     DATE
     Data Type: datetime64[ns]
-
+    
     min   2014-05-02
     max   2015-05-27
-    Name: date, dtype: datetime64[ns]
-
+    Name: date, dtype: datetime64[ns] 
+    
+    à-la-Mode: 
+    0   2014-06-23
+    dtype: datetime64[ns]
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     2014-06-23    142
     2014-06-25    131
     2014-06-26    131
     2014-07-08    127
     2015-04-27    126
-                 ...
+                 ... 
     2014-07-27      1
     2015-03-08      1
     2014-11-02      1
     2015-05-15      1
     2015-05-24      1
     Name: date, Length: 372, dtype: int64
-
+    
     # Unique Values: 372
+    
 
 
-
-### Continuous
-
-* SQUARE-FOOTAGE
-
-Redundancy check: is there any overlap in the measurements?
-
-* sqft_living = sqft_basement + sqft_above ?
-* sqft_lot - sqft_living = sqft_above ?
-
-
-**Continuous Variables:**
-a continuous variable can take on any value within a range
-
-* **sqft_living** --> highest corr : price (before transformation/scaling); most normal distribution
-* sqft_lot --> not normal distribution
-* sqft_living15 #Highly skewed
-* sqft_lot15 #Highly skewed
-* sqft_above #High corr with sqft_living
-* sqft_basement #Very high number of null values --> treat '0' = no basement?
-
-
-#### ['sqft_basement']
+### ['sqft_above']
 
 
 ```python
-# let's figure out what datatype is more appropriate for sqft_basement
-hot_stats(df, 'sqft_basement')
+hot_stats(df, 'sqft_above', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
-    SQFT_BASEMENT
-    Data Type: object
-
-    min    0.0
-    max      ?
-    Name: sqft_basement, dtype: object
-
-    No Nulls Found!
-
-    Non-Null Value Counts:
-    0.0       12826
-    ?           454
-    600.0       217
-    500.0       209
-    700.0       208
-              ...  
-    862.0         1
-    172.0         1
-    784.0         1
-    516.0         1
-    2580.0        1
-    Name: sqft_basement, Length: 304, dtype: int64
-
-    # Unique Values: 304
-
-
-
-
-```python
-# Note the majority of the values are zero...we could bin this as a binary
-# where the property either has a basement or does not...
-
-# For now we'll replace '?'s with string value '0.0'
-df['sqft_basement'].replace(to_replace='?', value='0.0', inplace=True)
-```
-
-
-```python
-# and change datatype to float.
-df['sqft_basement'] = df['sqft_basement'].astype('float')
-```
-
-
-```python
-hot_stats(df, 'sqft_basement', target='price')
-```
-
-    -------->
-    HOT!STATS
-    <--------
-
-    SQFT_BASEMENT
-    Data Type: float64
-
-    count    21597.00
-    mean       285.72
-    std        439.82
-    min          0.00
-    25%          0.00
-    50%          0.00
-    75%        550.00
-    max       4820.00
-    Name: sqft_basement, dtype: float64
-
-    No Nulls Found!
-
-    Non-Null Value Counts:
-    0.0       13280
-    600.0       217
-    500.0       209
-    700.0       208
-    800.0       201
-              ...  
-    915.0         1
-    295.0         1
-    1281.0        1
-    2130.0        1
-    906.0         1
-    Name: sqft_basement, Length: 303, dtype: int64
-
-    # Unique Values: 303
-
-    Correlation with PRICE: 0.3211
-
-
-    That's much better. Although, lot's of zeros could be a problem.
-    Let's check out the other square-footage features and see if those might be more useful.
-
-#### ['sqft_above']
-
-
-```python
-hot_stats(df, 'sqft_above', target='price')
-```
-
-    -------->
-    HOT!STATS
-    <--------
-
+    
     SQFT_ABOVE
     Data Type: int64
-
+    
     count    21597.000000
     mean      1788.596842
     std        827.759761
@@ -1938,45 +1980,50 @@ hot_stats(df, 'sqft_above', target='price')
     50%       1560.000000
     75%       2210.000000
     max       9410.000000
-    Name: sqft_above, dtype: float64
-
+    Name: sqft_above, dtype: float64 
+    
+    à-la-Mode: 
+    0    1300
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     1300    212
     1010    210
     1200    206
     1220    192
     1140    184
-           ...
+           ... 
     2601      1
     440       1
     2473      1
     2441      1
     1975      1
     Name: sqft_above, Length: 942, dtype: int64
-
+    
     # Unique Values: 942
-
+    
     Correlation with PRICE: 0.6054
 
 
     Some correlation with price here!
 
-#### ['sqft_living']
+### ['sqft_living']
 
 
 ```python
-hot_stats(df, 'sqft_living', target='price')
+hot_stats(df, 'sqft_living', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     SQFT_LIVING
     Data Type: int64
-
+    
     count    21597.000000
     mean      2080.321850
     std        918.106125
@@ -1985,63 +2032,50 @@ hot_stats(df, 'sqft_living', target='price')
     50%       1910.000000
     75%       2550.000000
     max      13540.000000
-    Name: sqft_living, dtype: float64
-
+    Name: sqft_living, dtype: float64 
+    
+    à-la-Mode: 
+    0    1300
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     1300    138
     1400    135
     1440    133
     1660    129
     1010    129
-           ...
+           ... 
     4970      1
     2905      1
     2793      1
     4810      1
     1975      1
     Name: sqft_living, Length: 1034, dtype: int64
-
+    
     # Unique Values: 1034
-
+    
     Correlation with PRICE: 0.7019
 
 
-    sqft_living shows correlation value of 0.7 with price -- our highest coefficient yet!
+sqft_living shows correlation value of 0.7 with price -- our highest coefficient yet!
+
+### ['sqft_lot']
 
 
 ```python
-# add sqft_living and sqft_above to our correlation threshold dict
-corrs = ['sqft_living', 'grade', 'sqft_above', 'bathrooms']
-corr_thresh_dict = corr_dict(corrs, 'price')
-corr_thresh_dict
-```
-
-
-
-
-    {'sqft_living': 0.7019173021377595,
-     'grade': 0.6679507713876452,
-     'sqft_above': 0.6053679437051795,
-     'bathrooms': 0.5259056214532012}
-
-
-
-#### ['sqft_lot']
-
-
-```python
-hot_stats(df, 'sqft_lot', target='price')
+hot_stats(df, 'sqft_lot', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     SQFT_LOT
     Data Type: int64
-
+    
     count    2.159700e+04
     mean     1.509941e+04
     std      4.141264e+04
@@ -2050,43 +2084,48 @@ hot_stats(df, 'sqft_lot', target='price')
     50%      7.618000e+03
     75%      1.068500e+04
     max      1.651359e+06
-    Name: sqft_lot, dtype: float64
-
+    Name: sqft_lot, dtype: float64 
+    
+    à-la-Mode: 
+    0    5000
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     5000      358
     6000      290
     4000      251
     7200      220
     7500      119
-             ...
+             ... 
     1448        1
     38884       1
     17313       1
     35752       1
     315374      1
     Name: sqft_lot, Length: 9776, dtype: int64
-
+    
     # Unique Values: 9776
-
+    
     Correlation with PRICE: 0.0899
 
 
-#### ['sqft_living15']
+### ['sqft_living15']
 
 
 ```python
-hot_stats(df, 'sqft_living15', target='price')
+hot_stats(df, 'sqft_living15', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     SQFT_LIVING15
     Data Type: int64
-
+    
     count    21597.000000
     mean      1986.620318
     std        685.230472
@@ -2095,43 +2134,48 @@ hot_stats(df, 'sqft_living15', target='price')
     50%       1840.000000
     75%       2360.000000
     max       6210.000000
-    Name: sqft_living15, dtype: float64
-
+    Name: sqft_living15, dtype: float64 
+    
+    à-la-Mode: 
+    0    1540
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     1540    197
     1440    195
     1560    192
     1500    180
     1460    169
-           ...
+           ... 
     4890      1
     2873      1
     952       1
     3193      1
     2049      1
     Name: sqft_living15, Length: 777, dtype: int64
-
+    
     # Unique Values: 777
-
+    
     Correlation with PRICE: 0.5852
 
 
-    We've identified another coefficient over the 0.5 correlation threshold.
+We've identified another coefficient over the 0.5 correlation threshold.
 
 
 ```python
-hot_stats(df, 'sqft_lot15', target='price')
+hot_stats(df, 'sqft_lot15', t='price')
 ```
 
     -------->
     HOT!STATS
     <--------
-
+    
     SQFT_LOT15
     Data Type: int64
-
+    
     count     21597.000000
     mean      12758.283512
     std       27274.441950
@@ -2140,51 +2184,39 @@ hot_stats(df, 'sqft_lot15', target='price')
     50%        7620.000000
     75%       10083.000000
     max      871200.000000
-    Name: sqft_lot15, dtype: float64
-
+    Name: sqft_lot15, dtype: float64 
+    
+    à-la-Mode: 
+    0    5000
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     5000      427
     4000      356
     6000      288
     7200      210
     4800      145
-             ...
+             ... 
     11036       1
     8989        1
     871200      1
     809         1
     6147        1
     Name: sqft_lot15, Length: 8682, dtype: int64
-
+    
     # Unique Values: 8682
-
+    
     Correlation with PRICE: 0.0828
 
 
+## Duplicates
 
-```python
-corrs.append('sqft_living15')
+The primary key we'd use as an index for this data set would be 'id'. Our assumption therefore is that the 'id' for each observation (row) is unique. Let's do a quick scan for duplicate entries to confirm this is true.
 
-corr_thresh_dict = corr_dict(corrs, 'price')
-corr_thresh_dict
-```
-
-
-
-
-    {'sqft_living': 0.7019173021377595,
-     'grade': 0.6679507713876452,
-     'sqft_above': 0.6053679437051795,
-     'bathrooms': 0.5259056214532012,
-     'sqft_living15': 0.5852412017040663}
-
-
-
-### Index
-
-#### ['id']
+### ['id']
 
 
 ```python
@@ -2194,10 +2226,10 @@ hot_stats(df, 'id')
     -------->
     HOT!STATS
     <--------
-
+    
     ID
     Data Type: int64
-
+    
     count    2.159700e+04
     mean     4.580474e+09
     std      2.876736e+09
@@ -2206,10 +2238,15 @@ hot_stats(df, 'id')
     50%      3.904930e+09
     75%      7.308900e+09
     max      9.900000e+09
-    Name: id, dtype: float64
-
+    Name: id, dtype: float64 
+    
+    à-la-Mode: 
+    0    795000620
+    dtype: int64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     795000620     3
     1825069031    2
@@ -2223,17 +2260,15 @@ hot_stats(df, 'id')
     880000205     1
     1777500160    1
     Name: id, Length: 21420, dtype: int64
-
+    
     # Unique Values: 21420
+    
 
-
-
-The primary key we'd use as an index for this data set would be 'id'. Our assumption therefore is that the 'id' for each observation (row) is unique. Let's do a quick scan for duplicate entries to confirm this is true.
 
 
 ```python
 # check for duplicate id's
-df['id'].duplicated().value_counts()
+df['id'].duplicated().value_counts() 
 ```
 
 
@@ -2250,7 +2285,7 @@ df['id'].duplicated().value_counts()
 # Looks like there are in fact some duplicate ID's! Not many, but worth investigating.
 
 # Let's flag the duplicate id's by creating a new column 'is_dupe':
-df.loc[df.duplicated(subset='id', keep=False), 'is_dupe'] = 1 # mark all duplicates
+df.loc[df.duplicated(subset='id', keep=False), 'is_dupe'] = 1 # mark all duplicates 
 
 # verify all duplicates were flagged
 df.is_dupe.value_counts() # 353
@@ -2313,7 +2348,7 @@ df['is_dupe'].value_counts()
 
 ```python
 # Let's now copy the duplicates into a dataframe subset for closer inspection
-# It's possible the pairs contain data missing from the other which
+# It's possible the pairs contain data missing from the other which 
 # we can use to fill nulls identified previously.
 
 df_dupes = df.loc[df['is_dupe'] == True]
@@ -2364,14 +2399,10 @@ df_dupes.head(6)
       <th>long</th>
       <th>sqft_living15</th>
       <th>sqft_lot15</th>
-      <th>is_waterfront</th>
-      <th>is_renovated</th>
+      <th>is_wf</th>
+      <th>is_ren</th>
       <th>viewed</th>
-      <th>floor_cat</th>
-      <th>bedroom_cat</th>
-      <th>bathroom_cat</th>
-      <th>condition_cat</th>
-      <th>grade_cat</th>
+      <th>basement</th>
       <th>yb_range</th>
       <th>yb_cat</th>
       <th>zip_range</th>
@@ -2406,11 +2437,7 @@ df_dupes.head(6)
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>1.50</td>
-      <td>3</td>
-      <td>8</td>
+      <td>True</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98065, 98118]</td>
@@ -2443,11 +2470,7 @@ df_dupes.head(6)
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>1.50</td>
-      <td>3</td>
-      <td>8</td>
+      <td>True</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98065, 98118]</td>
@@ -2480,11 +2503,7 @@ df_dupes.head(6)
       <td>False</td>
       <td>False</td>
       <td>True</td>
-      <td>1.0</td>
-      <td>4</td>
-      <td>3.25</td>
-      <td>3</td>
-      <td>11</td>
+      <td>True</td>
       <td>(1975, 1997]</td>
       <td>3</td>
       <td>(98000, 98033]</td>
@@ -2517,11 +2536,7 @@ df_dupes.head(6)
       <td>False</td>
       <td>False</td>
       <td>True</td>
-      <td>1.0</td>
-      <td>4</td>
-      <td>3.25</td>
-      <td>3</td>
-      <td>11</td>
+      <td>True</td>
       <td>(1975, 1997]</td>
       <td>3</td>
       <td>(98000, 98033]</td>
@@ -2554,11 +2569,7 @@ df_dupes.head(6)
       <td>False</td>
       <td>True</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>2</td>
-      <td>1.00</td>
-      <td>3</td>
-      <td>6</td>
+      <td>True</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98118, 98200]</td>
@@ -2591,11 +2602,7 @@ df_dupes.head(6)
       <td>False</td>
       <td>True</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>2</td>
-      <td>1.00</td>
-      <td>3</td>
-      <td>6</td>
+      <td>True</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98118, 98200]</td>
@@ -2658,14 +2665,10 @@ df_dupes.loc[df_dupes['id'] == 6021501535]
       <th>long</th>
       <th>sqft_living15</th>
       <th>sqft_lot15</th>
-      <th>is_waterfront</th>
-      <th>is_renovated</th>
+      <th>is_wf</th>
+      <th>is_ren</th>
       <th>viewed</th>
-      <th>floor_cat</th>
-      <th>bedroom_cat</th>
-      <th>bathroom_cat</th>
-      <th>condition_cat</th>
-      <th>grade_cat</th>
+      <th>basement</th>
       <th>yb_range</th>
       <th>yb_cat</th>
       <th>zip_range</th>
@@ -2700,11 +2703,7 @@ df_dupes.loc[df_dupes['id'] == 6021501535]
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>1.5</td>
-      <td>3</td>
-      <td>8</td>
+      <td>True</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98065, 98118]</td>
@@ -2737,11 +2736,7 @@ df_dupes.loc[df_dupes['id'] == 6021501535]
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>1.5</td>
-      <td>3</td>
-      <td>8</td>
+      <td>True</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98065, 98118]</td>
@@ -2803,14 +2798,10 @@ df.set_index('id')
       <th>long</th>
       <th>sqft_living15</th>
       <th>sqft_lot15</th>
-      <th>is_waterfront</th>
-      <th>is_renovated</th>
+      <th>is_wf</th>
+      <th>is_ren</th>
       <th>viewed</th>
-      <th>floor_cat</th>
-      <th>bedroom_cat</th>
-      <th>bathroom_cat</th>
-      <th>condition_cat</th>
-      <th>grade_cat</th>
+      <th>basement</th>
       <th>yb_range</th>
       <th>yb_cat</th>
       <th>zip_range</th>
@@ -2819,10 +2810,6 @@ df.set_index('id')
     </tr>
     <tr>
       <th>id</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
       <th></th>
       <th></th>
       <th></th>
@@ -2880,11 +2867,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>1.00</td>
-      <td>3</td>
-      <td>7</td>
+      <td>False</td>
       <td>(1951, 1975]</td>
       <td>2</td>
       <td>(98118, 98200]</td>
@@ -2916,11 +2899,7 @@ df.set_index('id')
       <td>False</td>
       <td>True</td>
       <td>False</td>
-      <td>2.0</td>
-      <td>3</td>
-      <td>2.25</td>
-      <td>3</td>
-      <td>7</td>
+      <td>True</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98118, 98200]</td>
@@ -2952,11 +2931,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>2</td>
-      <td>1.00</td>
-      <td>3</td>
-      <td>6</td>
+      <td>False</td>
       <td>(1900, 1951]</td>
       <td>1</td>
       <td>(98000, 98033]</td>
@@ -2988,11 +2963,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>4</td>
-      <td>3.00</td>
-      <td>5</td>
-      <td>7</td>
+      <td>True</td>
       <td>(1951, 1975]</td>
       <td>2</td>
       <td>(98118, 98200]</td>
@@ -3024,11 +2995,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>2.00</td>
-      <td>3</td>
-      <td>8</td>
+      <td>False</td>
       <td>(1975, 1997]</td>
       <td>3</td>
       <td>(98065, 98118]</td>
@@ -3036,10 +3003,6 @@ df.set_index('id')
       <td>False</td>
     </tr>
     <tr>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
       <td>...</td>
       <td>...</td>
       <td>...</td>
@@ -3096,11 +3059,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>3.0</td>
-      <td>3</td>
-      <td>2.50</td>
-      <td>3</td>
-      <td>8</td>
+      <td>False</td>
       <td>(1997, 2015]</td>
       <td>4</td>
       <td>(98065, 98118]</td>
@@ -3132,11 +3091,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>2.0</td>
-      <td>4</td>
-      <td>2.50</td>
-      <td>3</td>
-      <td>8</td>
+      <td>False</td>
       <td>(1997, 2015]</td>
       <td>4</td>
       <td>(98118, 98200]</td>
@@ -3168,11 +3123,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>2.0</td>
-      <td>2</td>
-      <td>0.75</td>
-      <td>3</td>
-      <td>7</td>
+      <td>False</td>
       <td>(1997, 2015]</td>
       <td>4</td>
       <td>(98118, 98200]</td>
@@ -3204,11 +3155,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>2.0</td>
-      <td>3</td>
-      <td>2.50</td>
-      <td>3</td>
-      <td>8</td>
+      <td>False</td>
       <td>(1997, 2015]</td>
       <td>4</td>
       <td>(98000, 98033]</td>
@@ -3240,11 +3187,7 @@ df.set_index('id')
       <td>False</td>
       <td>False</td>
       <td>False</td>
-      <td>2.0</td>
-      <td>2</td>
-      <td>0.75</td>
-      <td>3</td>
-      <td>7</td>
+      <td>False</td>
       <td>(1997, 2015]</td>
       <td>4</td>
       <td>(98118, 98200]</td>
@@ -3253,7 +3196,7 @@ df.set_index('id')
     </tr>
   </tbody>
 </table>
-<p>21597 rows × 33 columns</p>
+<p>21597 rows × 29 columns</p>
 </div>
 
 
@@ -3275,28 +3218,28 @@ with open('data.pickle', 'wb') as f:
 
 ```python
 #import df (pre-drops) with pickle
-with open('data.pickle', 'rb') as f:
-    df = pickle.load(f)
+#with open('data.pickle', 'rb') as f:
+#    df = pickle.load(f)
 ```
 
 
 ```python
-# let's drop the first occurring duplicate rows and keep the last ones
+# let's drop the first occurring duplicate rows and keep the last ones 
 # (since those more accurately reflect latest market data)
 
 # save original df.shape for comparison after dropping duplicate rows
 predrop = df.shape # (21597, 28)
 
 # first occurrence, keep last
-df.drop_duplicates(subset='id', keep ='last', inplace = True)
+df.drop_duplicates(subset='id', keep ='last', inplace = True) 
 
 # verify dropped rows by comparing df.shape before and after values
 print(f"predrop: {predrop}")
 print(f"postdrop: {df.shape}")
 ```
 
-    predrop: (21597, 34)
-    postdrop: (21420, 34)
+    predrop: (21597, 30)
+    postdrop: (21420, 30)
 
 
 ## Target
@@ -3312,10 +3255,10 @@ hot_stats(df, 'price')
     -------->
     HOT!STATS
     <--------
-
+    
     PRICE
     Data Type: float64
-
+    
     count      21420.00
     mean      541861.43
     std       367556.94
@@ -3324,29 +3267,34 @@ hot_stats(df, 'price')
     50%       450550.00
     75%       645000.00
     max      7700000.00
-    Name: price, dtype: float64
-
+    Name: price, dtype: float64 
+    
+    à-la-Mode: 
+    0    450000.0
+    dtype: float64
+    
+    
     No Nulls Found!
-
+    
     Non-Null Value Counts:
     450000.0    172
     350000.0    167
     550000.0    157
     500000.0    151
     425000.0    149
-               ...
+               ... 
     234975.0      1
     804995.0      1
     870515.0      1
     336950.0      1
     884744.0      1
     Name: price, Length: 3595, dtype: int64
-
+    
     # Unique Values: 3595
+    
 
 
-
-Keeping the below numbers in mind could be helpful as we start exploring the data:
+> Keeping the below numbers in mind could be helpful as we start exploring the data:
 
 * range: 78,000 to 7,700,000
 * mean value: 540,296
@@ -3354,16 +3302,31 @@ Keeping the below numbers in mind could be helpful as we start exploring the dat
 
 
 ```python
-# At this point we can begin exploring the data. Let's first review our current feature list and get rid
-# of any columns we no longer need. As we go through our analysis we'll decide which additional columns to
-# drop, transform, scale, normalize, etc.
+# long tails in price and the median is lower than the mean - distribution is skewed to the right
+sns.distplot(df.price)
+```
 
+
+
+
+    <matplotlib.axes._subplots.AxesSubplot at 0x1c218db278>
+
+
+
+
+![png](output_123_1.png)
+
+
+At this point we can begin exploring the data. Let's first review our current feature list and get rid of any columns we no longer need. As we go through our analysis we'll decide which additional columns to drop, transform, scale, normalize, etc.
+
+
+```python
 df.info()
 ```
 
     <class 'pandas.core.frame.DataFrame'>
     Int64Index: 21420 entries, 0 to 21596
-    Data columns (total 34 columns):
+    Data columns (total 30 columns):
     id               21420 non-null int64
     date             21420 non-null datetime64[ns]
     price            21420 non-null float64
@@ -3385,21 +3348,17 @@ df.info()
     long             21420 non-null float64
     sqft_living15    21420 non-null int64
     sqft_lot15       21420 non-null int64
-    is_waterfront    21420 non-null bool
-    is_renovated     21420 non-null bool
+    is_wf            21420 non-null bool
+    is_ren           21420 non-null bool
     viewed           21420 non-null bool
-    floor_cat        21420 non-null category
-    bedroom_cat      21420 non-null category
-    bathroom_cat     21420 non-null category
-    condition_cat    21420 non-null category
-    grade_cat        21420 non-null category
+    basement         21420 non-null bool
     yb_range         21334 non-null category
     yb_cat           21334 non-null category
     zip_range        21420 non-null category
     zip_cat          21420 non-null category
     is_dupe          21420 non-null bool
-    dtypes: bool(4), category(9), datetime64[ns](1), float64(9), int64(11)
-    memory usage: 3.9 MB
+    dtypes: bool(5), category(4), datetime64[ns](1), float64(9), int64(11)
+    memory usage: 3.8 MB
 
 
 
@@ -3448,7 +3407,7 @@ df.info()
 
     <class 'pandas.core.frame.DataFrame'>
     Int64Index: 21420 entries, 0 to 21596
-    Data columns (total 26 columns):
+    Data columns (total 22 columns):
     price            21420 non-null float64
     bedrooms         21420 non-null int64
     bathrooms        21420 non-null float64
@@ -3464,55 +3423,30 @@ df.info()
     long             21420 non-null float64
     sqft_living15    21420 non-null int64
     sqft_lot15       21420 non-null int64
-    is_waterfront    21420 non-null bool
-    is_renovated     21420 non-null bool
+    is_wf            21420 non-null bool
+    is_ren           21420 non-null bool
     viewed           21420 non-null bool
-    floor_cat        21420 non-null category
-    bedroom_cat      21420 non-null category
-    bathroom_cat     21420 non-null category
-    condition_cat    21420 non-null category
-    grade_cat        21420 non-null category
+    basement         21420 non-null bool
     yb_cat           21334 non-null category
     zip_cat          21420 non-null category
     is_dupe          21420 non-null bool
-    dtypes: bool(4), category(7), float64(6), int64(9)
+    dtypes: bool(5), category(2), float64(6), int64(9)
     memory usage: 2.8 MB
 
 
+# EXPLORE:
+    
+    EDA CHECKLIST:
+    linearity (scatter matrices)
+    multicollinearity (heatmaps)
+    distributions (histograms, KDEs)
+    regression (regplot)
 
-```python
-# cols kept for EDA:
-
-# target variable
-target = ['price']
-
-# categorical:
-cats = ['grade', 'condition', 'zipcode', 'bathrooms', 'bedrooms', 'floors']
-
-#numeric/continuous:
-nums = ['sqft_living', 'sqft_above', 'sqft_basement', 'sqft_living15', 'sqft_lot', 'sqft_lot15']
-
-# binned:
-binned = ['is_waterfront', 'is_renovated', 'viewed', 'is_dupe', 'yb_cat', 'zip_cat', 'bathroom_cat', 'bedroom_cat', 'floor_cat', 'grade_cat',  'condition_cat']
-
-# dummies
-#dummies = ['yb_2','yb_3', 'yb_4', 'zip_2', 'zip_3', 'zip_4']
-```
+**QUESTION: Which features are the best candidates for predicting property values?**
 
 
 ```python
-# Create dataframe subsets for each datatype group
-
-df_binned = df[binned]
-df_cats = df[cats]
-df_nums = df[nums]
-#df_dummies = df[dummies]
-df_target = df[target]
-```
-
-
-```python
-df.head()
+df.describe()
 ```
 
 
@@ -3551,164 +3485,152 @@ df.head()
       <th>long</th>
       <th>sqft_living15</th>
       <th>sqft_lot15</th>
-      <th>is_waterfront</th>
-      <th>is_renovated</th>
-      <th>viewed</th>
-      <th>floor_cat</th>
-      <th>bedroom_cat</th>
-      <th>bathroom_cat</th>
-      <th>condition_cat</th>
-      <th>grade_cat</th>
-      <th>yb_cat</th>
-      <th>zip_cat</th>
-      <th>is_dupe</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>0</td>
-      <td>221900.0</td>
-      <td>3</td>
-      <td>1.00</td>
-      <td>1180</td>
-      <td>5650</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>7</td>
-      <td>1180</td>
-      <td>0.0</td>
-      <td>98178</td>
-      <td>47.5112</td>
-      <td>-122.257</td>
-      <td>1340</td>
-      <td>5650</td>
-      <td>False</td>
-      <td>False</td>
-      <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>1.00</td>
-      <td>3</td>
-      <td>7</td>
-      <td>2</td>
-      <td>4</td>
-      <td>False</td>
+      <td>count</td>
+      <td>2.142000e+04</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>2.142000e+04</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>21420.00000</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
+      <td>21420.000000</td>
     </tr>
     <tr>
-      <td>1</td>
-      <td>538000.0</td>
-      <td>3</td>
-      <td>2.25</td>
-      <td>2570</td>
-      <td>7242</td>
-      <td>2.0</td>
-      <td>3</td>
-      <td>7</td>
-      <td>2170</td>
-      <td>400.0</td>
-      <td>98125</td>
-      <td>47.7210</td>
-      <td>-122.319</td>
-      <td>1690</td>
-      <td>7639</td>
-      <td>False</td>
-      <td>True</td>
-      <td>False</td>
-      <td>2.0</td>
-      <td>3</td>
-      <td>2.25</td>
-      <td>3</td>
-      <td>7</td>
-      <td>1</td>
-      <td>4</td>
-      <td>False</td>
+      <td>mean</td>
+      <td>5.418614e+05</td>
+      <td>3.373950</td>
+      <td>2.118429</td>
+      <td>2083.132633</td>
+      <td>1.512804e+04</td>
+      <td>1.495985</td>
+      <td>3.410784</td>
+      <td>7.662792</td>
+      <td>1791.170215</td>
+      <td>285.937021</td>
+      <td>98077.87437</td>
+      <td>47.560197</td>
+      <td>-122.213784</td>
+      <td>1988.384080</td>
+      <td>12775.718161</td>
     </tr>
     <tr>
-      <td>2</td>
-      <td>180000.0</td>
-      <td>2</td>
-      <td>1.00</td>
-      <td>770</td>
-      <td>10000</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>6</td>
-      <td>770</td>
-      <td>0.0</td>
-      <td>98028</td>
-      <td>47.7379</td>
-      <td>-122.233</td>
-      <td>2720</td>
-      <td>8062</td>
-      <td>False</td>
-      <td>False</td>
-      <td>False</td>
-      <td>1.0</td>
-      <td>2</td>
-      <td>1.00</td>
-      <td>3</td>
-      <td>6</td>
-      <td>1</td>
-      <td>1</td>
-      <td>False</td>
+      <td>std</td>
+      <td>3.675569e+05</td>
+      <td>0.925405</td>
+      <td>0.768720</td>
+      <td>918.808412</td>
+      <td>4.153080e+04</td>
+      <td>0.540081</td>
+      <td>0.650035</td>
+      <td>1.171971</td>
+      <td>828.692965</td>
+      <td>440.012962</td>
+      <td>53.47748</td>
+      <td>0.138589</td>
+      <td>0.140791</td>
+      <td>685.537057</td>
+      <td>27345.621867</td>
     </tr>
     <tr>
-      <td>3</td>
-      <td>604000.0</td>
-      <td>4</td>
-      <td>3.00</td>
-      <td>1960</td>
-      <td>5000</td>
-      <td>1.0</td>
-      <td>5</td>
-      <td>7</td>
-      <td>1050</td>
-      <td>910.0</td>
-      <td>98136</td>
-      <td>47.5208</td>
-      <td>-122.393</td>
-      <td>1360</td>
-      <td>5000</td>
-      <td>False</td>
-      <td>False</td>
-      <td>False</td>
-      <td>1.0</td>
-      <td>4</td>
-      <td>3.00</td>
-      <td>5</td>
-      <td>7</td>
-      <td>2</td>
-      <td>4</td>
-      <td>False</td>
+      <td>min</td>
+      <td>7.800000e+04</td>
+      <td>1.000000</td>
+      <td>0.500000</td>
+      <td>370.000000</td>
+      <td>5.200000e+02</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>3.000000</td>
+      <td>370.000000</td>
+      <td>0.000000</td>
+      <td>98001.00000</td>
+      <td>47.155900</td>
+      <td>-122.519000</td>
+      <td>399.000000</td>
+      <td>651.000000</td>
     </tr>
     <tr>
-      <td>4</td>
-      <td>510000.0</td>
-      <td>3</td>
-      <td>2.00</td>
-      <td>1680</td>
-      <td>8080</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>8</td>
-      <td>1680</td>
-      <td>0.0</td>
-      <td>98074</td>
-      <td>47.6168</td>
-      <td>-122.045</td>
-      <td>1800</td>
-      <td>7503</td>
-      <td>False</td>
-      <td>False</td>
-      <td>False</td>
-      <td>1.0</td>
-      <td>3</td>
-      <td>2.00</td>
-      <td>3</td>
-      <td>8</td>
-      <td>3</td>
-      <td>3</td>
-      <td>False</td>
+      <td>25%</td>
+      <td>3.249500e+05</td>
+      <td>3.000000</td>
+      <td>1.750000</td>
+      <td>1430.000000</td>
+      <td>5.040000e+03</td>
+      <td>1.000000</td>
+      <td>3.000000</td>
+      <td>7.000000</td>
+      <td>1200.000000</td>
+      <td>0.000000</td>
+      <td>98033.00000</td>
+      <td>47.471200</td>
+      <td>-122.328000</td>
+      <td>1490.000000</td>
+      <td>5100.000000</td>
+    </tr>
+    <tr>
+      <td>50%</td>
+      <td>4.505500e+05</td>
+      <td>3.000000</td>
+      <td>2.250000</td>
+      <td>1920.000000</td>
+      <td>7.614000e+03</td>
+      <td>1.500000</td>
+      <td>3.000000</td>
+      <td>7.000000</td>
+      <td>1560.000000</td>
+      <td>0.000000</td>
+      <td>98065.00000</td>
+      <td>47.572100</td>
+      <td>-122.230000</td>
+      <td>1840.000000</td>
+      <td>7620.000000</td>
+    </tr>
+    <tr>
+      <td>75%</td>
+      <td>6.450000e+05</td>
+      <td>4.000000</td>
+      <td>2.500000</td>
+      <td>2550.000000</td>
+      <td>1.069050e+04</td>
+      <td>2.000000</td>
+      <td>4.000000</td>
+      <td>8.000000</td>
+      <td>2220.000000</td>
+      <td>550.000000</td>
+      <td>98117.00000</td>
+      <td>47.678100</td>
+      <td>-122.125000</td>
+      <td>2370.000000</td>
+      <td>10086.250000</td>
+    </tr>
+    <tr>
+      <td>max</td>
+      <td>7.700000e+06</td>
+      <td>33.000000</td>
+      <td>8.000000</td>
+      <td>13540.000000</td>
+      <td>1.651359e+06</td>
+      <td>3.500000</td>
+      <td>5.000000</td>
+      <td>13.000000</td>
+      <td>9410.000000</td>
+      <td>4820.000000</td>
+      <td>98199.00000</td>
+      <td>47.777600</td>
+      <td>-121.315000</td>
+      <td>6210.000000</td>
+      <td>871200.000000</td>
     </tr>
   </tbody>
 </table>
@@ -3716,65 +3638,34 @@ df.head()
 
 
 
-# EXPLORE:
-
-    EDA CHECKLIST:
-    linearity (scatter matrices)
-    multicollinearity (heatmaps)
-    distributions (histograms, KDEs)
-    regression (regplot)
-
-**QUESTION: Which features are the best candidates for predicting property values?**
-    * Continuous / Numeric Variables
-    * Categorical / Discrete Variables
-    * Binarized / Binned Variables
-
 ## Linearity
 During the scrub process we made some assumptions and guesses based on correlation coefficients and other values. Let's see what the visualizations tell us by creating some scatter plots.
-
-
-```python
-plt.style.use('fivethirtyeight')
-# add target to numeric df subset
-df_nums['price'] = df.price
-
-# plot scatter matrix
-pd.plotting.scatter_matrix(df_nums, figsize=(20,20));
-```
-
-
-![png](output/output_142_0.png)
-
-
-We can see a clear linear relationship between price and sqft_living, sqft_above, sqft_living15 and somewhat so for sqft_basement. However, it looks like there is covariance among these variables as well.
 
 
 ```python
 # Visualize the relationship between square-footages and price
 sqft_int = ['sqft_living', 'sqft_above', 'sqft_basement']
 sub_scatter(df, sqft_int, 'price', color='#0A2FC4') #20C5C6
-# need to add titles etc
 ```
 
 
-![png](output/output_144_0.png)
+![png](output_134_0.png)
 
-
-Linear relationships with price show up clearly for sqft_living, sqft_above, sqft_living15.
 
 
 ```python
 # visualize relationship between sqft_lot, sqft_lot15, sqft_living15 and price.
 y = 'price'
-x_cols = ['sqft_living15', 'sqft_lot', 'sqft_lot15']
+sqft_ext = ['sqft_living15', 'sqft_lot', 'sqft_lot15']
 
-sub_scatter(df, x_cols, y, color='#6A76FB')
-# need to add titles etc
+sub_scatter(df, sqft_ext, y, color='#6A76FB')
 ```
 
 
-![png](output/output_146_0.png)
+![png](output_135_0.png)
 
+
+Linear relationships with price show up clearly for sqft_living, sqft_above, sqft_living15.
 
 ## Multicollinearity
 **QUESTION: which predictors are closely related (and should be dropped)?**
@@ -3783,16 +3674,38 @@ sub_scatter(df, x_cols, y, color='#6A76FB')
 
 
 ```python
-# Heatmap: Absolute Correlation Matrix
-corr = df.drop('is_dupe', axis=1).corr()
+#correlation values to check
 
-plt.figure(figsize=(20,20))
-sns.heatmap(data=corr.abs(), annot=True, cmap=sns.color_palette('Greens'))
-plt.show()
+corr = df.corr()
+
+# Checking multicollinearity with a heatmap
+def multiplot(corr,figsize=(20,20)):
+    fig, ax = plt.subplots(figsize=figsize)
+
+    mask = np.zeros_like(corr, dtype=np.bool)
+    idx = np.triu_indices_from(mask)
+    mask[idx] = True
+
+    sns.heatmap(np.abs(corr),square=True,mask=mask,annot=True,cmap="Greens",ax=ax)
+    
+    ax.set_ylim(len(corr), -.5, .5)
+    
+    
+    return fig, ax
+
+multiplot(np.abs(corr.round(3)))
 ```
 
 
-![png](output/output_149_0.png)
+
+
+    (<Figure size 1440x1440 with 2 Axes>,
+     <matplotlib.axes._subplots.AxesSubplot at 0x1c1f176240>)
+
+
+
+
+![png](output_139_1.png)
 
 
 The square footages probably overlap. (In other words sqft_above and sqft_basement could be part of the total sqft_living measurement).
@@ -3805,7 +3718,7 @@ sub_scatter(df, x_cols, 'sqft_living', ncols = 2, color='#FD6F6B')  # lightred
 ```
 
 
-![png](output/output_151_0.png)
+![png](output_141_0.png)
 
 
     Yikes. These are extremely linear. Just for fun, let's crunch the numbers...
@@ -3814,10 +3727,141 @@ sub_scatter(df, x_cols, 'sqft_living', ncols = 2, color='#FD6F6B')  # lightred
 
 
 ```python
-#DataFrame.equals(self, other)	Test whether two objects contain the same elements.
+# create new col containing sum of above and basement
+df['sqft_sums'] = df['sqft_above'] + df['sqft_basement']
+df['sqft_diffs'] = df['sqft_living'] - df['sqft_above']
 
-#DataFrame.sum(self[, axis, skipna, level, …])	Return the sum of the values for the requested axis.
+
+sqft_cols = ['sqft_sums', 'sqft_living', 'sqft_above','sqft_diffs', 'sqft_basement']
+df_sqft = df[sqft_cols]
+df_sqft
 ```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>sqft_sums</th>
+      <th>sqft_living</th>
+      <th>sqft_above</th>
+      <th>sqft_diffs</th>
+      <th>sqft_basement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>1180.0</td>
+      <td>1180</td>
+      <td>1180</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2570.0</td>
+      <td>2570</td>
+      <td>2170</td>
+      <td>400</td>
+      <td>400.0</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>770.0</td>
+      <td>770</td>
+      <td>770</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>1960.0</td>
+      <td>1960</td>
+      <td>1050</td>
+      <td>910</td>
+      <td>910.0</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>1680.0</td>
+      <td>1680</td>
+      <td>1680</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <td>21592</td>
+      <td>1530.0</td>
+      <td>1530</td>
+      <td>1530</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>21593</td>
+      <td>2310.0</td>
+      <td>2310</td>
+      <td>2310</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>21594</td>
+      <td>1020.0</td>
+      <td>1020</td>
+      <td>1020</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>21595</td>
+      <td>1600.0</td>
+      <td>1600</td>
+      <td>1600</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>21596</td>
+      <td>1020.0</td>
+      <td>1020</td>
+      <td>1020</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>21420 rows × 5 columns</p>
+</div>
+
+
+
+> Looks like the 0.0 values in sqft_basement do in fact mean there is no basement, and for those houses the sqft_above is exactly the same as sqft_living. With this now confirmed, we can be confident that sqft_living is the only measurement worth keeping for analysis.
 
 
 ```python
@@ -3866,149 +3910,97 @@ if sqft_ab.all() + sqft_bs.all() == sqft_lv.all():
 
 **ANSWER: Yes. Sqft_living is the sum of sqft_above and sqft_basement.**
 
-    Sqft_living15 (the square-footage of the neighbors' houses) looks to be the only one that correlates well with
-    price. However, as we saw above, this also correlates with square-foot living, so we'd run into some
-    multicollinearity issues if we kept both. Since sqft_living is higher, that is likely to be a better candidate
-    for prediction.
-
-**QUESTION: Can we combine features for a higher correlation?**
-
-
-```python
-# Correlation coefficient for sqft_living and price
-np.corrcoef(df['sqft_living'], df['price'])[0][1]
-```
-
-
-
-
-    0.701294859117587
-
-
-
-
-```python
-# Correlation coefficient for sqft_living15 and price
-np.corrcoef(df['sqft_living15'], df['price'])[0][1]
-```
-
-
-
-
-    0.5837916994556072
-
-
-
-
-```python
-# Let's see if we can combine them for a higher correlation
-
-weights = np.linspace(0, 1, 50)
-
-best_weight = 0
-max_corr = 0
-
-for weight in weights:
-    #creating a new feature by taking a weighted sum
-    new_feature = weight*df['sqft_living'] + (1 - weight)*df['sqft_living15']
-
-    corr_coef = np.corrcoef(new_feature, df['price'])[0][1]
-    if np.abs(corr_coef) > max_corr:
-        max_corr = np.abs(corr_coef)
-        best_weight = weight
-
-print(best_weight, 1 - best_weight)
-```
-
-    0.7755102040816326 0.22448979591836737
-
-
-    The combined correlation value of sqft_living and sqft_living15 (0.77) is indeed higher
-    than sqft_living by itself (0.7).
-
-
-```python
-# Let's see if we can also combine bedrooms and bathrooms for a higher correlation
-
-weights = np.linspace(0, 1, 50)
-
-best_weight = 0
-max_corr = 0
-
-for weight in weights:
-    #creating a new feature by taking a weighted sum
-    new_feature = weight*df['bathrooms'] + (1 - weight)*df['bedrooms']
-
-    corr_coef = np.corrcoef(new_feature, df['price'])[0][1]
-    if np.abs(corr_coef) > max_corr:
-        max_corr = np.abs(corr_coef)
-        best_weight = weight
-
-print(best_weight, 1 - best_weight)
-```
-
-    0.9183673469387754 0.08163265306122458
-
-
-    0.92 combined correlation for bathrooms and bedrooms!
-
-**ANSWER: We could combine bathrooms/bedrooms as well as sqft_living and sqft_living15 to achieve higher correlation values with price.**
-
-...How do we do this?
-
 ## Distributions
+
+
+```python
+# group cols kept for EDA into lists for easy extraction
+
+# binned:
+bins = ['is_wf', 'is_ren', 'viewed','basement', 'yb_cat', 'zip_cat', 'is_dupe']
+
+# categorical:
+cats = ['grade', 'condition', 'bathrooms', 'bedrooms', 'floors']
+
+#numeric:
+nums = ['sqft_living', 'sqft_above', 'sqft_basement', 'sqft_living15', 'sqft_lot', 'sqft_lot15']
+
+# geographic:
+geo = ['lat', 'long', 'zipcode']
+
+# target variable
+t = ['price']
+```
 
 ### Histograms
 
 
 ```python
-# histogram subplots
-def sub_hists(data):
-    plt.style.use('fivethirtyeight')
-    for column in data.describe():
-        fig = plt.figure(figsize=(12, 5))
-
-        ax = fig.add_subplot(121)
-        ax.hist(data[column], density=True, label = column+' histogram', bins=20)
-        ax.set_title(column.capitalize())
-
-        ax.legend()
-
-        fig.tight_layout()
-```
-
-
-```python
 # hist plot
-sub_hists(df_nums)
+sub_hists(df)
 ```
 
 
-![png](output/output_170_0.png)
+![png](output_152_0.png)
 
 
 
-![png](output/output_170_1.png)
+![png](output_152_1.png)
 
 
 
-![png](output/output_170_2.png)
+![png](output_152_2.png)
 
 
 
-![png](output/output_170_3.png)
+![png](output_152_3.png)
 
 
 
-![png](output/output_170_4.png)
+![png](output_152_4.png)
 
 
 
-![png](output/output_170_5.png)
+![png](output_152_5.png)
 
 
-    Although sqft_living15 didn't have as much linearity with price as other candidates, it appears
-    to have the most normal distribution out of all of them.
+
+![png](output_152_6.png)
+
+
+
+![png](output_152_7.png)
+
+
+
+![png](output_152_8.png)
+
+
+
+![png](output_152_9.png)
+
+
+
+![png](output_152_10.png)
+
+
+
+![png](output_152_11.png)
+
+
+
+![png](output_152_12.png)
+
+
+
+![png](output_152_13.png)
+
+
+
+![png](output_152_14.png)
+
+
+Although sqft_living15 didn't have as much linearity with price as other candidates, it appears to have the most normal distribution out of all of them.
 
 ### KDEs
 
@@ -4028,50 +4020,54 @@ sns.distplot(df['sqft_basement'], ax=ax[2][1])
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x1c1dddbe80>
+    <matplotlib.axes._subplots.AxesSubplot at 0x1c20b826d8>
 
 
 
 
-![png](output/output_173_1.png)
+![png](output_155_1.png)
 
 
 
 ```python
 fig, ax = plt.subplots(ncols=1, nrows=3, figsize=(12,12))
-sns.distplot(df['bathroom_cat'], ax=ax[0])
-sns.distplot(df['bedroom_cat'], ax=ax[1])
-sns.distplot(df['floor_cat'], ax=ax[2])
+sns.distplot(df['bathrooms'], ax=ax[0])
+sns.distplot(df['bedrooms'], ax=ax[1])
+sns.distplot(df['floors'], ax=ax[2])
 ```
 
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x1c1e68ad30>
+    <matplotlib.axes._subplots.AxesSubplot at 0x1c1e9e7080>
 
 
 
 
-![png](output/output_174_1.png)
+![png](output_156_1.png)
 
 
 
 ```python
-fig, ax = plt.subplots(ncols=2, figsize=(12,4))
-sns.distplot(df['grade'], ax=ax[0])
-sns.distplot(df['zipcode'], ax=ax[1]) # look at actual zipcode value dist instead of category
+fig, ax = plt.subplots(ncols=3, figsize=(12,3))
+sns.distplot(df['condition'], ax=ax[0])
+sns.distplot(df['grade'], ax=ax[1])
+sns.distplot(df['zipcode'], ax=ax[2]) # look at actual zipcode value dist instead of category
 ```
 
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x1c1e3496d8>
+    <matplotlib.axes._subplots.AxesSubplot at 0x1c1fa93ef0>
 
 
 
 
-![png](output/output_175_1.png)
+![png](output_157_1.png)
 
+
+> Diminishing returns for condition (highest scores = min 3 out of 5) and grade (score of 7 out of 13)
+Zip Codes are all over the map...literally.
 
 ### Geographic
 
@@ -4079,294 +4075,245 @@ sns.distplot(df['zipcode'], ax=ax[1]) # look at actual zipcode value dist instea
 
 
 ```python
-# bring lat / long columns back in for plotting geographic distribution of ordinal categories
-
-latlong = ['lat', 'long']
-latlong_df = df[latlong]
-geo_cats_df = pd.concat([df_cats, latlong_df], axis=1)
+cats
 ```
 
 
-```python
-# run (ordinal) categorical features through lmplot as a forloop to plot geographic distribution visual
 
-for x in cats:
-    sns.lmplot(data=geo_cats_df, x="long", y="lat", fit_reg=False, hue=x, height=10)
+
+    ['grade', 'condition', 'bathrooms', 'bedrooms', 'floors']
+
+
+
+
+```python
+# lmplot geographic distribution by iterating over list of cat feats
+for col in cats:
+    sns.lmplot(data=df, x="long", y="lat", fit_reg=False, hue=col, height=10)
 plt.show()
 ```
 
 
-![png](output/output_179_0.png)
+![png](output_162_0.png)
 
 
 
-![png](output/output_179_1.png)
+![png](output_162_1.png)
 
 
 
-![png](output/output_179_2.png)
+![png](output_162_2.png)
 
 
 
-![png](output/output_179_3.png)
+![png](output_162_3.png)
 
 
 
-![png](output/output_179_4.png)
+![png](output_162_4.png)
 
 
+> The highest graded properties appear to be most dense in the upper left (NW) quadrant. Since we already know that grade has a strong correlation with price, we can posit more confidently that grade, location, and price are strongly related.
 
-![png](output/output_179_5.png)
-
-
-    The highest grade properties appear to be most dense in the upper left quadrant.
-    Since we already know that grade has a strong correlation with price, we can
-    posit more confidently that grade, location, and price are all related.
-
-    Note: if we were to look at an actual map, we'd see this is Seattle.
+> Homes with highest number of floors tend to be located in the NW as well. If we were to look at an actual map, we'd see this is Seattle. 
 
 
 ```python
-# binary/categorical:
-#binned = ['is_waterfront', 'is_renovated', 'viewed', 'is_dupe']
+bins
+```
 
-# bring lat / long columns back in for plotting geographic distribution of ordinal categories
 
-geo_bins = pd.concat([df_binned, latlong_df], axis=1)
-geo_bins
 
+
+    ['is_wf', 'is_ren', 'viewed', 'basement', 'yb_cat', 'zip_cat', 'is_dupe']
+
+
+
+
+```python
 # run binned features through lmplot as a forloop to plot geographic distribution visual
-for x in binned:
-    sns.lmplot(data=geo_bins, x="long", y="lat", fit_reg=False, hue=x, height=10)
+for col in bins:
+    sns.lmplot(data=df, x="long", y="lat", fit_reg=False, hue=col, height=10)
 plt.show()
 ```
 
 
-![png](output/output_181_0.png)
+![png](output_165_0.png)
 
 
 
-![png](output/output_181_1.png)
+![png](output_165_1.png)
 
 
 
-![png](output/output_181_2.png)
+![png](output_165_2.png)
 
 
 
-![png](output/output_181_3.png)
+![png](output_165_3.png)
 
 
 
-![png](output/output_181_4.png)
+![png](output_165_4.png)
 
 
 
-![png](output/output_181_5.png)
+![png](output_165_5.png)
 
 
 
-![png](output/output_181_6.png)
+![png](output_165_6.png)
 
 
+> Some obvious but also some interesting things to observe in the above lmplots:
 
-![png](output/output_181_7.png)
-
-
-
-![png](output/output_181_8.png)
-
-
-
-![png](output/output_181_9.png)
-
-
-
-![png](output/output_181_10.png)
-
-
-    Some obvious but also some interesting things to observe in the above lmplots:
-
-    The good news is that waterfront properties do indeed show up as being on the water,
-    so we can rest assured that data is valid. Unfortunately as we saw earlier, this doesn't
-    seem to correlate much with price.
-
-    'is_dupe' (which represents properties that sold twice in the 2 year period of this dataset)
-    tells us pretty much nothing about anything. At least not on its own here.
-
-    Probably the most surprising observation is 'viewed'. They almost all line up with the
-    coastline, or very close to the water. This may not mean anything but it is worth noting.
-
-    Lastly, is_renovated is pretty densely clumped up in the northwest quadrant (again, Seattle).
-    We can assume therefore that a lot of renovations are taking place in the city. Not entirely
-    useful but worth mentioning neverthless.
+* waterfront properties do indeed show up as being on the water. Unfortunately as we saw earlier, this doesn't seem to correlate much with price. This is odd (at least to me) because I'd expect those homes to be more expensive. If this were Los Angeles (where I live) that's a well-known fact...
+    
+* 'is_dupe' (which represents properties that sold twice in the 2 year period of this dataset) tells us pretty much nothing about anything. They look evenly distributed geographically - we can eliminate this from the model. 
+    
+* Probably the most surprising observation is 'viewed'. They almost all line up with the coastline, or very close to the water. This may not mean anything but it is worth noting.
+    
+* Lastly, is_renovated is pretty densely clumped up in the northwest quadrant (again, Seattle). We can assume therefore that a lot of renovations are taking place in the city. Not entirely useful but worth mentioning neverthless.
 
 ### Box Plots
 
 
 ```python
-x = df['grade_cat']
-y = df['price']
-
-plt.style.use('seaborn')
-fig, ax = plt.subplots(ncols=1,figsize=(12,6))
-sns.boxplot(x=x, y=y, ax=ax)
-# Create keywords for .set_xticklabels()
-tick_kwds = dict(horizontalalignment='right',
-                  fontweight='light',
-                  fontsize='x-large',   
-                  rotation=45)
-
-ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
-
-title='Grade Categories Boxplot'
-ax.set_title(title.title())
-ax.set_xlabel('grade_cat')
-ax.set_ylabel('price')
-fig.tight_layout()
-```
-
-
-![png](output/output_184_0.png)
-
-
-
-```python
-x = df['grade_cat']
+x = df['grade']
 y = df['price']
 
 plt.style.use('seaborn')
 fig, ax = plt.subplots(ncols=1,figsize=(12,6))
 sns.boxplot(x=x, y=y, ax=ax, showfliers=False) # outliers removed
 # Create keywords for .set_xticklabels()
-tick_kwds = dict(horizontalalignment='right',
-                  fontweight='light',
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
                   fontsize='x-large',   
                   rotation=45)
 
 ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
 
-title='Grade Categories Boxplot'
+title='Grade Boxplot - No Outliers'
 ax.set_title(title.title())
-ax.set_xlabel('grade_cat')
+ax.set_xlabel('grade')
 ax.set_ylabel('price')
 fig.tight_layout()
 ```
 
 
-![png](output/output_185_0.png)
+![png](output_168_0.png)
 
 
 
 ```python
-x = df['bathroom_cat']
+x = df['bathrooms']
 y = df['price']
 
 plt.style.use('tableau-colorblind10')
 fig, ax = plt.subplots(ncols=1,figsize=(12,6))
 sns.boxplot(x=x, y=y, ax=ax, showfliers=False) # outliers removed
 # Create keywords for .set_xticklabels()
-tick_kwds = dict(horizontalalignment='right',
-                  fontweight='light',
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
                   fontsize='large',   
                   rotation=90)
 
 ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
 
-title='Bathroom Categories Boxplot'
+title='Bathrooms Boxplot'
 ax.set_title(title.title())
-ax.set_xlabel('bathroom_cat')
+ax.set_xlabel('bathrooms')
 ax.set_ylabel('price')
 fig.tight_layout()
 ```
 
 
-![png](output/output_186_0.png)
+![png](output_169_0.png)
 
 
 
 ```python
-x = df['bedroom_cat']
+x = df['bedrooms']
 y = df['price']
 
 plt.style.use('tableau-colorblind10')
 fig, ax = plt.subplots(ncols=1,figsize=(12,6))
 sns.boxplot(x=x, y=y, ax=ax, showfliers=False) #outliers removed
 # Create keywords for .set_xticklabels()
-tick_kwds = dict(horizontalalignment='right',
-                  fontweight='light',
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
                   fontsize='large',   
                   rotation=90)
 
 ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
 
-title='Bedroom Categories Boxplot'
+title='Bedrooms Boxplot'
 ax.set_title(title.title())
-ax.set_xlabel('bedroom_cat')
+ax.set_xlabel('bedrooms')
 ax.set_ylabel('price')
 fig.tight_layout()
 ```
 
 
-![png](output/output_187_0.png)
+![png](output_170_0.png)
 
 
 
 ```python
-x = df['floor_cat']
+x = df['floors']
 y = df['price']
 
 plt.style.use('tableau-colorblind10')
 fig, ax = plt.subplots(ncols=1,figsize=(12,6))
 sns.boxplot(x=x, y=y, ax=ax, showfliers=False) #outliers removed
 # Create keywords for .set_xticklabels()
-tick_kwds = dict(horizontalalignment='right',
-                  fontweight='light',
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
                   fontsize='large',   
                   rotation=90)
 
 ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
 
-title='Floor Categories Boxplot'
+title='Floors Boxplot'
 ax.set_title(title.title())
-ax.set_xlabel('floor_cat')
+ax.set_xlabel('floors')
 ax.set_ylabel('price')
 fig.tight_layout()
 ```
 
 
-![png](output/output_188_0.png)
+![png](output_171_0.png)
 
 
 
 ```python
-x = df['zip_cat']
+x = df['zipcode']
 y = df['price']
 
 plt.style.use('tableau-colorblind10')
-fig, ax = plt.subplots(ncols=1,figsize=(12,6))
+fig, ax = plt.subplots(ncols=1,figsize=(20,20))
 sns.boxplot(x=x, y=y, ax=ax, showfliers=False) #outliers removed
 
 # Create keywords for .set_xticklabels()
-tick_kwds = dict(horizontalalignment='right',
-                  fontweight='light',
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
                   fontsize='x-large',   
                   rotation=45)
 
 ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
 
-title='zipcode categories boxplot'
+title='zipcode boxplot'
 ax.set_title(title.title())
-ax.set_xlabel('zip_cat')
+ax.set_xlabel('zipcode')
 ax.set_ylabel('price')
 fig.tight_layout()
 ```
 
 
-![png](output/output_189_0.png)
+![png](output_172_0.png)
 
 
-    Category 3 for zipcode seems to be a good candidate for higher priced homes.
+Certain zipcodes certainly contain higher home prices (mean and median) than others. This is definitely worth exploring further.
 
 
 ```python
@@ -4377,8 +4324,8 @@ plt.style.use('tableau-colorblind10')
 fig, ax = plt.subplots(ncols=1,figsize=(12,6))
 sns.boxplot(x=x, y=y, ax=ax, showfliers=False)
 # Create keywords for .set_xticklabels()
-tick_kwds = dict(horizontalalignment='right',
-                  fontweight='light',
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
                   fontsize='x-large',   
                   rotation=45)
 
@@ -4392,84 +4339,128 @@ fig.tight_layout()
 ```
 
 
-![png](output/output_191_0.png)
+![png](output_174_0.png)
 
 
-    This tells us pretty much nothing other than newer homes sell at a higher price point. As far as making a and
-    prediction goes, we can only really use this to suggest building a new property rather than renovating.
+To a certain degree, there is some linearity in year built, with newer homes (category4) falling within higher price ranges than older homes.
 
-## Regression Plots
+# MODEL:
+
+Let's run the first model using features that have the highest correlation with price. (Min threshold > 0.5)
 
 
 ```python
-plt.style.use('fivethirtyeight')
-def plot_reg(data, feature, target):
-    sns.regplot(x=feature, y=target, data=data)
-    plt.show()
+# BINNED VARS
+corr_dict(bins, 'price') # none are over 0.5
+```
+
+
+
+
+    {'is_wf': 0.26491453896199596,
+     'is_ren': 0.11797451976936697,
+     'viewed': 0.3554833537898794,
+     'basement': 0.17830254026220943,
+     'yb_cat': 0.0848440693678135,
+     'zip_cat': -0.02889098458398676,
+     'is_dupe': -0.013145274112223848}
+
+
+
+
+```python
+# GEOGRAPHIC VARS
+corr_dict(geo, 'price') # none are over 0.5
+```
+
+
+
+
+    {'lat': 0.3064389377124828,
+     'long': 0.019825644946585803,
+     'zipcode': -0.05116905613944957}
+
+
+
+
+```python
+# CATEGORICAL VARS
+corr_dict(cats, 'price') # grade and bathrooms are over 0.5
+```
+
+
+
+
+    {'grade': 0.6668349564389758,
+     'condition': 0.03421927419820454,
+     'bathrooms': 0.5252152971165565,
+     'bedrooms': 0.30964001522735674,
+     'floors': 0.25497163287127883}
+
+
+
+
+```python
+# NUMERIC VARS
+corr_dict(nums, 'price') #sqft_living, sqft_above, sqft_living15 are over 0.5
+```
+
+
+
+
+    {'sqft_living': 0.7012948591175869,
+     'sqft_above': 0.6044238993986454,
+     'sqft_basement': 0.3212640164141515,
+     'sqft_living15': 0.5837916994556076,
+     'sqft_lot': 0.0887889532628066,
+     'sqft_lot15': 0.08204522248404933}
+
+
+
+NOTES: 
+> The coefficients above are based on the raw values. It's possible that some of the variables will produce a higher correlation with price after scaling / transformation. We'll test this out in the second model iteration.
+
+> We also need to take covariance/multicollinearity into consideration. As we saw when we created the multiplot heatmap (as well as scatterplots), the sqft variables have covariance. To make things more difficult, they're also collinear with grade and bathrooms. This could cause our model to overfit.
+
+## Model 1
+
+
+```python
+# highest corr coefs with price - initial model using raw values
+pred1 = ['grade', 'sqft_living', 'bathrooms']
 ```
 
 
 ```python
-plot_reg(df, 'sqft_living', 'price')
+corr_dict(pred1, 'price')
 ```
 
 
-![png](output/output_195_0.png)
+
+
+    {'grade': 0.6668349564389758,
+     'sqft_living': 0.7012948591175869,
+     'bathrooms': 0.5252152971165565}
+
 
 
 
 ```python
-plot_reg(df, 'bathrooms', df.price)
+f1 = '+'.join(pred1)
+f1
 ```
 
 
-![png](output/output_196_0.png)
+
+
+    'grade+sqft_living+bathrooms'
+
 
 
 
 ```python
-plot_reg(df, 'grade', df.price)
-```
-
-
-![png](output/output_197_0.png)
-
-
-# FIT AN INITIAL MODEL:
-Various forms, detail later...
-Assessing the model:
-Assess parameters (slope,intercept)
-Check if the model explains the variation in the data (RMSE, F, R_square)
-Are the coeffs, slopes, intercepts in appropriate units?
-Whats the impact of collinearity? Can we ignore?
-Revise the fitted model
-Multicollinearity is big issue for lin regression and cannot fully remove it
-Use the predictive ability of model to test it (like R2 and RMSE)
-Check for missed non-linearity
-Holdout validation / Train/test split
-use sklearn train_test_split
-
-
-```python
-preds = ['zipcode', 'grade', 'sqft_living', 'sqft_living15', 'price']
-```
-
-
-```python
-df_pred = df[preds].copy()
-```
-
-
-```python
-# Import packages
-import statsmodels.api as sm
-import statsmodels.stats.api as sms
-import statsmodels.formula.api as smf
-import scipy.stats as stats
-# Enter equation for selected predictors: (use C to run as categorical)
-f1 = 'price~C(zipcode)+C(grade)+sqft_living+sqft_living15'
-# Run model and report sumamry
-model = smf.ols(formula=f1, data=df_pred).fit()
+f ='price~'+f1
+model = smf.ols(formula=f, data=df).fit()
 model.summary()
 ```
 
@@ -4479,28 +4470,572 @@ model.summary()
 <table class="simpletable">
 <caption>OLS Regression Results</caption>
 <tr>
-  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.784</td>  
+  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.536</td>  
 </tr>
 <tr>
-  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.783</td>  
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.536</td>  
 </tr>
 <tr>
-  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   956.5</td>  
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   8251.</td>  
 </tr>
 <tr>
-  <th>Date:</th>             <td>Mon, 04 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
+  <th>Date:</th>             <td>Thu, 07 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
 </tr>
 <tr>
-  <th>Time:</th>                 <td>13:54:51</td>     <th>  Log-Likelihood:    </th> <td>-2.8847e+05</td>
+  <th>Time:</th>                 <td>01:43:38</td>     <th>  Log-Likelihood:    </th> <td>-2.9666e+05</td>
 </tr>
 <tr>
-  <th>No. Observations:</th>      <td> 21420</td>      <th>  AIC:               </th>  <td>5.771e+05</td>
+  <th>No. Observations:</th>      <td> 21420</td>      <th>  AIC:               </th>  <td>5.933e+05</td> 
 </tr>
 <tr>
-  <th>Df Residuals:</th>          <td> 21338</td>      <th>  BIC:               </th>  <td>5.778e+05</td>
+  <th>Df Residuals:</th>          <td> 21416</td>      <th>  BIC:               </th>  <td>5.934e+05</td> 
 </tr>
 <tr>
-  <th>Df Model:</th>              <td>    81</td>      <th>                     </th>      <td> </td>     
+  <th>Df Model:</th>              <td>     3</td>      <th>                     </th>      <td> </td>     
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>     
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+       <td></td>          <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>   <td>    -6e+05</td> <td> 1.34e+04</td> <td>  -44.765</td> <td> 0.000</td> <td>-6.26e+05</td> <td>-5.74e+05</td>
+</tr>
+<tr>
+  <th>grade</th>       <td> 1.044e+05</td> <td> 2307.935</td> <td>   45.215</td> <td> 0.000</td> <td> 9.98e+04</td> <td> 1.09e+05</td>
+</tr>
+<tr>
+  <th>sqft_living</th> <td>  203.2884</td> <td>    3.354</td> <td>   60.617</td> <td> 0.000</td> <td>  196.715</td> <td>  209.862</td>
+</tr>
+<tr>
+  <th>bathrooms</th>   <td>-3.834e+04</td> <td> 3475.069</td> <td>  -11.033</td> <td> 0.000</td> <td>-4.52e+04</td> <td>-3.15e+04</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>16794.800</td> <th>  Durbin-Watson:     </th>  <td>   1.986</td>  
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>   <th>  Jarque-Bera (JB):  </th> <td>1000555.673</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 3.293</td>   <th>  Prob(JB):          </th>  <td>    0.00</td>  
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td>35.828</td>   <th>  Cond. No.          </th>  <td>1.81e+04</td>  
+</tr>
+</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.81e+04. This might indicate that there are<br/>strong multicollinearity or other numerical problems.
+
+
+
+> P-values look good, but the R-squared (0.536) could be much higher. 
+
+> Skew and Kurtosis are not bad (Skew:	3.293, Kurtosis:	35.828)
+
+> Let's do a second iteration after one-hot-encoding condition and run OLS again with zipcode included and the condition dummies.
+
+
+```python
+# save key regression values in a dict for making quick comparisons between models
+reg_mods = dict()
+reg_mods['model1'] = {'vars':f1,'r2':0.536, 's': 3.293, 'k': 35.828}
+
+reg_mods
+```
+
+
+
+
+    {'model1': {'vars': 'grade+sqft_living+bathrooms',
+      'r2': 0.536,
+      's': 3.293,
+      'k': 35.828}}
+
+
+
+## Model 2
+
+### One-Hot Encoding
+
+* Create Dummies for Condition
+
+
+```python
+# apply one-hot encoding to condition
+df2 = pd.get_dummies(df, columns=['condition'], drop_first=True)
+df2.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>price</th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft_living</th>
+      <th>sqft_lot</th>
+      <th>floors</th>
+      <th>grade</th>
+      <th>sqft_above</th>
+      <th>sqft_basement</th>
+      <th>zipcode</th>
+      <th>lat</th>
+      <th>long</th>
+      <th>sqft_living15</th>
+      <th>sqft_lot15</th>
+      <th>is_wf</th>
+      <th>is_ren</th>
+      <th>viewed</th>
+      <th>basement</th>
+      <th>yb_cat</th>
+      <th>zip_cat</th>
+      <th>is_dupe</th>
+      <th>condition_2</th>
+      <th>condition_3</th>
+      <th>condition_4</th>
+      <th>condition_5</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>221900.0</td>
+      <td>3</td>
+      <td>1.00</td>
+      <td>1180</td>
+      <td>5650</td>
+      <td>1.0</td>
+      <td>7</td>
+      <td>1180</td>
+      <td>0.0</td>
+      <td>98178</td>
+      <td>47.5112</td>
+      <td>-122.257</td>
+      <td>1340</td>
+      <td>5650</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>2</td>
+      <td>4</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>538000.0</td>
+      <td>3</td>
+      <td>2.25</td>
+      <td>2570</td>
+      <td>7242</td>
+      <td>2.0</td>
+      <td>7</td>
+      <td>2170</td>
+      <td>400.0</td>
+      <td>98125</td>
+      <td>47.7210</td>
+      <td>-122.319</td>
+      <td>1690</td>
+      <td>7639</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>1</td>
+      <td>4</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>180000.0</td>
+      <td>2</td>
+      <td>1.00</td>
+      <td>770</td>
+      <td>10000</td>
+      <td>1.0</td>
+      <td>6</td>
+      <td>770</td>
+      <td>0.0</td>
+      <td>98028</td>
+      <td>47.7379</td>
+      <td>-122.233</td>
+      <td>2720</td>
+      <td>8062</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>1</td>
+      <td>1</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>604000.0</td>
+      <td>4</td>
+      <td>3.00</td>
+      <td>1960</td>
+      <td>5000</td>
+      <td>1.0</td>
+      <td>7</td>
+      <td>1050</td>
+      <td>910.0</td>
+      <td>98136</td>
+      <td>47.5208</td>
+      <td>-122.393</td>
+      <td>1360</td>
+      <td>5000</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>2</td>
+      <td>4</td>
+      <td>False</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>510000.0</td>
+      <td>3</td>
+      <td>2.00</td>
+      <td>1680</td>
+      <td>8080</td>
+      <td>1.0</td>
+      <td>8</td>
+      <td>1680</td>
+      <td>0.0</td>
+      <td>98074</td>
+      <td>47.6168</td>
+      <td>-122.045</td>
+      <td>1800</td>
+      <td>7503</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>3</td>
+      <td>3</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+df2.columns
+```
+
+
+
+
+    Index(['price', 'bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors',
+           'grade', 'sqft_above', 'sqft_basement', 'zipcode', 'lat', 'long',
+           'sqft_living15', 'sqft_lot15', 'is_wf', 'is_ren', 'viewed', 'basement',
+           'yb_cat', 'zip_cat', 'is_dupe', 'condition_2', 'condition_3',
+           'condition_4', 'condition_5'],
+          dtype='object')
+
+
+
+
+```python
+# iterate through list of dummy cols to plot distributions where val > 0
+
+# create list of dummy cols
+cols = ['condition_2', 'condition_3', 'condition_4']
+
+# create empty dict
+groups={}
+
+# iterate over dummy cols and grouby into dict for vals > 0 
+for col in cols:
+    groups[col]= df2.groupby(col)[col,'price'].get_group(1.0)
+
+# check vals
+groups.keys()
+groups['condition_2']
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>condition_2</th>
+      <th>price</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>38</td>
+      <td>1</td>
+      <td>240000.0</td>
+    </tr>
+    <tr>
+      <td>242</td>
+      <td>1</td>
+      <td>455000.0</td>
+    </tr>
+    <tr>
+      <td>328</td>
+      <td>1</td>
+      <td>186375.0</td>
+    </tr>
+    <tr>
+      <td>465</td>
+      <td>1</td>
+      <td>80000.0</td>
+    </tr>
+    <tr>
+      <td>702</td>
+      <td>1</td>
+      <td>480000.0</td>
+    </tr>
+    <tr>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <td>19284</td>
+      <td>1</td>
+      <td>174900.0</td>
+    </tr>
+    <tr>
+      <td>19348</td>
+      <td>1</td>
+      <td>290000.0</td>
+    </tr>
+    <tr>
+      <td>19433</td>
+      <td>1</td>
+      <td>450000.0</td>
+    </tr>
+    <tr>
+      <td>19496</td>
+      <td>1</td>
+      <td>246500.0</td>
+    </tr>
+    <tr>
+      <td>19605</td>
+      <td>1</td>
+      <td>235000.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>162 rows × 2 columns</p>
+</div>
+
+
+
+
+```python
+# show diffs between subcats of condition using histograms
+for k, v in groups.items():
+    plt.figure()
+    plt.hist(v['price'], label=k)
+    plt.legend()
+```
+
+
+![png](output_195_0.png)
+
+
+
+![png](output_195_1.png)
+
+
+
+![png](output_195_2.png)
+
+
+
+```python
+# As we saw before, there are diminishing returns as far as condition goes...
+# visualize another way with distplots
+for k, v in groups.items():
+    plt.figure()
+    sns.distplot(v['price'], label=k)
+    plt.legend()
+```
+
+
+![png](output_196_0.png)
+
+
+
+![png](output_196_1.png)
+
+
+
+![png](output_196_2.png)
+
+
+> NOTE condition is skewed by tails/outliers)
+
+
+```python
+# use list comp to grab condition dummies
+c_bins = [col for col in df2.columns if 'condition' in col]
+c_bins
+```
+
+
+
+
+    ['condition_2', 'condition_3', 'condition_4', 'condition_5']
+
+
+
+
+```python
+pred2 = ['C(zipcode)', 'grade', 'sqft_living', 'sqft_living15']
+```
+
+
+```python
+pred2.extend(c_bins)
+```
+
+
+```python
+pred2
+```
+
+
+
+
+    ['C(zipcode)',
+     'grade',
+     'sqft_living',
+     'sqft_living15',
+     'condition_2',
+     'condition_3',
+     'condition_4',
+     'condition_5']
+
+
+
+
+```python
+f2 = '+'.join(pred2)
+f2
+```
+
+
+
+
+    'C(zipcode)+grade+sqft_living+sqft_living15+condition_2+condition_3+condition_4+condition_5'
+
+
+
+
+```python
+f ='price~'+f2
+f
+```
+
+
+
+
+    'price~C(zipcode)+grade+sqft_living+sqft_living15+condition_2+condition_3+condition_4+condition_5'
+
+
+
+
+```python
+model = smf.ols(formula=f, data=df2).fit()
+model.summary()
+```
+
+
+
+
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.750</td>  
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.749</td>  
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   842.7</td>  
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 07 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
+</tr>
+<tr>
+  <th>Time:</th>                 <td>01:43:43</td>     <th>  Log-Likelihood:    </th> <td>-2.9003e+05</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td> 21420</td>      <th>  AIC:               </th>  <td>5.802e+05</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td> 21343</td>      <th>  BIC:               </th>  <td>5.808e+05</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    76</td>      <th>                     </th>      <td> </td>     
 </tr>
 <tr>
   <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>     
@@ -4511,287 +5046,1595 @@ model.summary()
            <td></td>              <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
 </tr>
 <tr>
-  <th>Intercept</th>           <td>  8.19e+04</td> <td> 1.72e+05</td> <td>    0.477</td> <td> 0.634</td> <td>-2.55e+05</td> <td> 4.19e+05</td>
+  <th>Intercept</th>           <td>-5.742e+05</td> <td> 3.73e+04</td> <td>  -15.415</td> <td> 0.000</td> <td>-6.47e+05</td> <td>-5.01e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98002]</th> <td> 2.172e+04</td> <td> 1.52e+04</td> <td>    1.427</td> <td> 0.154</td> <td>-8109.593</td> <td> 5.16e+04</td>
+  <th>C(zipcode)[T.98002]</th> <td> 3.993e+04</td> <td> 1.64e+04</td> <td>    2.438</td> <td> 0.015</td> <td> 7828.078</td> <td>  7.2e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98003]</th> <td> 2158.3824</td> <td> 1.37e+04</td> <td>    0.157</td> <td> 0.875</td> <td>-2.47e+04</td> <td> 2.91e+04</td>
+  <th>C(zipcode)[T.98003]</th> <td>-8927.8223</td> <td> 1.48e+04</td> <td>   -0.605</td> <td> 0.545</td> <td>-3.78e+04</td> <td>    2e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98004]</th> <td> 7.575e+05</td> <td> 1.34e+04</td> <td>   56.696</td> <td> 0.000</td> <td> 7.31e+05</td> <td> 7.84e+05</td>
+  <th>C(zipcode)[T.98004]</th> <td> 7.669e+05</td> <td> 1.44e+04</td> <td>   53.327</td> <td> 0.000</td> <td> 7.39e+05</td> <td> 7.95e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98005]</th> <td> 2.975e+05</td> <td> 1.61e+04</td> <td>   18.485</td> <td> 0.000</td> <td> 2.66e+05</td> <td> 3.29e+05</td>
+  <th>C(zipcode)[T.98005]</th> <td> 2.756e+05</td> <td> 1.73e+04</td> <td>   15.892</td> <td> 0.000</td> <td> 2.42e+05</td> <td>  3.1e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98006]</th> <td>  2.55e+05</td> <td> 1.21e+04</td> <td>   21.091</td> <td> 0.000</td> <td> 2.31e+05</td> <td> 2.79e+05</td>
+  <th>C(zipcode)[T.98006]</th> <td> 2.569e+05</td> <td>  1.3e+04</td> <td>   19.702</td> <td> 0.000</td> <td> 2.31e+05</td> <td> 2.82e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98007]</th> <td> 2.498e+05</td> <td> 1.71e+04</td> <td>   14.584</td> <td> 0.000</td> <td> 2.16e+05</td> <td> 2.83e+05</td>
+  <th>C(zipcode)[T.98007]</th> <td> 2.235e+05</td> <td> 1.84e+04</td> <td>   12.113</td> <td> 0.000</td> <td> 1.87e+05</td> <td>  2.6e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98008]</th> <td> 3.069e+05</td> <td> 1.36e+04</td> <td>   22.524</td> <td> 0.000</td> <td>  2.8e+05</td> <td> 3.34e+05</td>
+  <th>C(zipcode)[T.98008]</th> <td> 2.814e+05</td> <td> 1.47e+04</td> <td>   19.175</td> <td> 0.000</td> <td> 2.53e+05</td> <td>  3.1e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98010]</th> <td> 7.095e+04</td> <td> 1.95e+04</td> <td>    3.647</td> <td> 0.000</td> <td> 3.28e+04</td> <td> 1.09e+05</td>
+  <th>C(zipcode)[T.98010]</th> <td> 8.078e+04</td> <td> 2.09e+04</td> <td>    3.862</td> <td> 0.000</td> <td> 3.98e+04</td> <td> 1.22e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98011]</th> <td> 1.216e+05</td> <td> 1.53e+04</td> <td>    7.956</td> <td> 0.000</td> <td> 9.17e+04</td> <td> 1.52e+05</td>
+  <th>C(zipcode)[T.98011]</th> <td> 1.041e+05</td> <td> 1.64e+04</td> <td>    6.331</td> <td> 0.000</td> <td> 7.19e+04</td> <td> 1.36e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98014]</th> <td> 1.035e+05</td> <td> 1.79e+04</td> <td>    5.773</td> <td> 0.000</td> <td> 6.84e+04</td> <td> 1.39e+05</td>
+  <th>C(zipcode)[T.98014]</th> <td> 1.316e+05</td> <td> 1.92e+04</td> <td>    6.839</td> <td> 0.000</td> <td> 9.39e+04</td> <td> 1.69e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98019]</th> <td> 8.251e+04</td> <td> 1.54e+04</td> <td>    5.366</td> <td> 0.000</td> <td> 5.24e+04</td> <td> 1.13e+05</td>
+  <th>C(zipcode)[T.98019]</th> <td> 8.045e+04</td> <td> 1.65e+04</td> <td>    4.862</td> <td> 0.000</td> <td>  4.8e+04</td> <td> 1.13e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98022]</th> <td> 4.715e+04</td> <td> 1.44e+04</td> <td>    3.268</td> <td> 0.001</td> <td> 1.89e+04</td> <td> 7.54e+04</td>
+  <th>C(zipcode)[T.98022]</th> <td>  4.08e+04</td> <td> 1.55e+04</td> <td>    2.629</td> <td> 0.009</td> <td> 1.04e+04</td> <td> 7.12e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98023]</th> <td>-2.637e+04</td> <td> 1.19e+04</td> <td>   -2.215</td> <td> 0.027</td> <td>-4.97e+04</td> <td>-3037.729</td>
+  <th>C(zipcode)[T.98023]</th> <td>-3.604e+04</td> <td> 1.28e+04</td> <td>   -2.815</td> <td> 0.005</td> <td>-6.11e+04</td> <td>-1.09e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98024]</th> <td> 1.731e+05</td> <td> 2.13e+04</td> <td>    8.129</td> <td> 0.000</td> <td> 1.31e+05</td> <td> 2.15e+05</td>
+  <th>C(zipcode)[T.98024]</th> <td> 1.935e+05</td> <td> 2.29e+04</td> <td>    8.450</td> <td> 0.000</td> <td> 1.49e+05</td> <td> 2.38e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98027]</th> <td>  1.55e+05</td> <td> 1.24e+04</td> <td>   12.457</td> <td> 0.000</td> <td> 1.31e+05</td> <td> 1.79e+05</td>
+  <th>C(zipcode)[T.98027]</th> <td> 1.462e+05</td> <td> 1.34e+04</td> <td>   10.935</td> <td> 0.000</td> <td>  1.2e+05</td> <td> 1.72e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98028]</th> <td> 1.296e+05</td> <td> 1.36e+04</td> <td>    9.498</td> <td> 0.000</td> <td> 1.03e+05</td> <td> 1.56e+05</td>
+  <th>C(zipcode)[T.98028]</th> <td> 1.129e+05</td> <td> 1.47e+04</td> <td>    7.697</td> <td> 0.000</td> <td> 8.42e+04</td> <td> 1.42e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98029]</th> <td> 2.066e+05</td> <td> 1.33e+04</td> <td>   15.578</td> <td> 0.000</td> <td> 1.81e+05</td> <td> 2.33e+05</td>
+  <th>C(zipcode)[T.98029]</th> <td> 1.872e+05</td> <td> 1.42e+04</td> <td>   13.143</td> <td> 0.000</td> <td> 1.59e+05</td> <td> 2.15e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98030]</th> <td>  519.8491</td> <td> 1.41e+04</td> <td>    0.037</td> <td> 0.971</td> <td> -2.7e+04</td> <td> 2.81e+04</td>
+  <th>C(zipcode)[T.98030]</th> <td>-5017.7418</td> <td> 1.51e+04</td> <td>   -0.332</td> <td> 0.740</td> <td>-3.47e+04</td> <td> 2.46e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98031]</th> <td> 1.432e+04</td> <td> 1.38e+04</td> <td>    1.038</td> <td> 0.299</td> <td>-1.27e+04</td> <td> 4.13e+04</td>
+  <th>C(zipcode)[T.98031]</th> <td>  821.4336</td> <td> 1.48e+04</td> <td>    0.055</td> <td> 0.956</td> <td>-2.82e+04</td> <td> 2.99e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98032]</th> <td> 1.089e+04</td> <td> 1.79e+04</td> <td>    0.608</td> <td> 0.543</td> <td>-2.42e+04</td> <td>  4.6e+04</td>
+  <th>C(zipcode)[T.98032]</th> <td> 5944.5034</td> <td> 1.93e+04</td> <td>    0.309</td> <td> 0.758</td> <td>-3.18e+04</td> <td> 4.37e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98033]</th> <td> 3.706e+05</td> <td> 1.23e+04</td> <td>   30.174</td> <td> 0.000</td> <td> 3.46e+05</td> <td> 3.95e+05</td>
+  <th>C(zipcode)[T.98033]</th> <td> 3.675e+05</td> <td> 1.32e+04</td> <td>   27.814</td> <td> 0.000</td> <td> 3.42e+05</td> <td> 3.93e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98034]</th> <td> 2.124e+05</td> <td> 1.17e+04</td> <td>   18.214</td> <td> 0.000</td> <td>  1.9e+05</td> <td> 2.35e+05</td>
+  <th>C(zipcode)[T.98034]</th> <td> 2.099e+05</td> <td> 1.25e+04</td> <td>   16.742</td> <td> 0.000</td> <td> 1.85e+05</td> <td> 2.34e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98038]</th> <td> 2.541e+04</td> <td> 1.15e+04</td> <td>    2.210</td> <td> 0.027</td> <td> 2870.711</td> <td> 4.79e+04</td>
+  <th>C(zipcode)[T.98038]</th> <td> 1.699e+04</td> <td> 1.24e+04</td> <td>    1.374</td> <td> 0.170</td> <td>-7254.764</td> <td> 4.12e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98039]</th> <td> 1.242e+06</td> <td> 2.63e+04</td> <td>   47.154</td> <td> 0.000</td> <td> 1.19e+06</td> <td> 1.29e+06</td>
+  <th>C(zipcode)[T.98039]</th> <td> 1.353e+06</td> <td> 2.82e+04</td> <td>   47.908</td> <td> 0.000</td> <td>  1.3e+06</td> <td> 1.41e+06</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98040]</th> <td> 5.483e+05</td> <td> 1.38e+04</td> <td>   39.633</td> <td> 0.000</td> <td> 5.21e+05</td> <td> 5.75e+05</td>
+  <th>C(zipcode)[T.98040]</th> <td>  5.33e+05</td> <td> 1.49e+04</td> <td>   35.700</td> <td> 0.000</td> <td> 5.04e+05</td> <td> 5.62e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98042]</th> <td> 8126.0998</td> <td> 1.16e+04</td> <td>    0.698</td> <td> 0.485</td> <td>-1.47e+04</td> <td> 3.09e+04</td>
+  <th>C(zipcode)[T.98042]</th> <td>-3933.0593</td> <td> 1.25e+04</td> <td>   -0.314</td> <td> 0.754</td> <td>-2.85e+04</td> <td> 2.06e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98045]</th> <td> 1.066e+05</td> <td> 1.47e+04</td> <td>    7.244</td> <td> 0.000</td> <td> 7.77e+04</td> <td> 1.35e+05</td>
+  <th>C(zipcode)[T.98045]</th> <td> 1.115e+05</td> <td> 1.58e+04</td> <td>    7.046</td> <td> 0.000</td> <td> 8.05e+04</td> <td> 1.43e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98052]</th> <td> 2.291e+05</td> <td> 1.16e+04</td> <td>   19.725</td> <td> 0.000</td> <td> 2.06e+05</td> <td> 2.52e+05</td>
+  <th>C(zipcode)[T.98052]</th> <td> 2.063e+05</td> <td> 1.25e+04</td> <td>   16.531</td> <td> 0.000</td> <td> 1.82e+05</td> <td> 2.31e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98053]</th> <td>  1.94e+05</td> <td> 1.25e+04</td> <td>   15.482</td> <td> 0.000</td> <td> 1.69e+05</td> <td> 2.19e+05</td>
+  <th>C(zipcode)[T.98053]</th> <td> 1.896e+05</td> <td> 1.35e+04</td> <td>   14.064</td> <td> 0.000</td> <td> 1.63e+05</td> <td> 2.16e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98055]</th> <td> 4.777e+04</td> <td>  1.4e+04</td> <td>    3.424</td> <td> 0.001</td> <td> 2.04e+04</td> <td> 7.51e+04</td>
+  <th>C(zipcode)[T.98055]</th> <td> 5.794e+04</td> <td>  1.5e+04</td> <td>    3.862</td> <td> 0.000</td> <td> 2.85e+04</td> <td> 8.73e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98056]</th> <td> 1.057e+05</td> <td> 1.24e+04</td> <td>    8.492</td> <td> 0.000</td> <td> 8.13e+04</td> <td>  1.3e+05</td>
+  <th>C(zipcode)[T.98056]</th> <td> 9.847e+04</td> <td> 1.34e+04</td> <td>    7.355</td> <td> 0.000</td> <td> 7.22e+04</td> <td> 1.25e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98058]</th> <td> 3.174e+04</td> <td> 1.21e+04</td> <td>    2.618</td> <td> 0.009</td> <td> 7974.526</td> <td> 5.55e+04</td>
+  <th>C(zipcode)[T.98058]</th> <td>  1.76e+04</td> <td>  1.3e+04</td> <td>    1.350</td> <td> 0.177</td> <td>-7958.768</td> <td> 4.32e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98059]</th> <td> 6.707e+04</td> <td> 1.21e+04</td> <td>    5.547</td> <td> 0.000</td> <td> 4.34e+04</td> <td> 9.08e+04</td>
+  <th>C(zipcode)[T.98059]</th> <td> 6.182e+04</td> <td>  1.3e+04</td> <td>    4.756</td> <td> 0.000</td> <td> 3.63e+04</td> <td> 8.73e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98065]</th> <td> 7.795e+04</td> <td> 1.34e+04</td> <td>    5.807</td> <td> 0.000</td> <td> 5.16e+04</td> <td> 1.04e+05</td>
+  <th>C(zipcode)[T.98065]</th> <td> 7.349e+04</td> <td> 1.44e+04</td> <td>    5.087</td> <td> 0.000</td> <td> 4.52e+04</td> <td> 1.02e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98070]</th> <td> 2.035e+05</td> <td> 1.83e+04</td> <td>   11.122</td> <td> 0.000</td> <td> 1.68e+05</td> <td> 2.39e+05</td>
+  <th>C(zipcode)[T.98070]</th> <td>  1.98e+05</td> <td> 1.97e+04</td> <td>   10.059</td> <td> 0.000</td> <td> 1.59e+05</td> <td> 2.37e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98072]</th> <td>   1.5e+05</td> <td> 1.38e+04</td> <td>   10.857</td> <td> 0.000</td> <td> 1.23e+05</td> <td> 1.77e+05</td>
+  <th>C(zipcode)[T.98072]</th> <td> 1.378e+05</td> <td> 1.49e+04</td> <td>    9.273</td> <td> 0.000</td> <td> 1.09e+05</td> <td> 1.67e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98074]</th> <td> 1.686e+05</td> <td> 1.24e+04</td> <td>   13.634</td> <td> 0.000</td> <td> 1.44e+05</td> <td> 1.93e+05</td>
+  <th>C(zipcode)[T.98074]</th> <td> 1.622e+05</td> <td> 1.33e+04</td> <td>   12.212</td> <td> 0.000</td> <td> 1.36e+05</td> <td> 1.88e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98075]</th> <td> 1.638e+05</td> <td> 1.31e+04</td> <td>   12.528</td> <td> 0.000</td> <td> 1.38e+05</td> <td> 1.89e+05</td>
+  <th>C(zipcode)[T.98075]</th> <td> 1.611e+05</td> <td>  1.4e+04</td> <td>   11.488</td> <td> 0.000</td> <td> 1.34e+05</td> <td> 1.89e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98077]</th> <td> 9.536e+04</td> <td> 1.54e+04</td> <td>    6.209</td> <td> 0.000</td> <td> 6.53e+04</td> <td> 1.25e+05</td>
+  <th>C(zipcode)[T.98077]</th> <td> 9.933e+04</td> <td> 1.65e+04</td> <td>    6.014</td> <td> 0.000</td> <td>  6.7e+04</td> <td> 1.32e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98092]</th> <td>-2.608e+04</td> <td> 1.29e+04</td> <td>   -2.024</td> <td> 0.043</td> <td>-5.13e+04</td> <td> -825.942</td>
+  <th>C(zipcode)[T.98092]</th> <td>-4.483e+04</td> <td> 1.39e+04</td> <td>   -3.237</td> <td> 0.001</td> <td> -7.2e+04</td> <td>-1.77e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98102]</th> <td> 4.855e+05</td> <td> 1.91e+04</td> <td>   25.372</td> <td> 0.000</td> <td> 4.48e+05</td> <td> 5.23e+05</td>
+  <th>C(zipcode)[T.98102]</th> <td> 5.053e+05</td> <td> 2.06e+04</td> <td>   24.574</td> <td> 0.000</td> <td> 4.65e+05</td> <td> 5.46e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98103]</th> <td> 3.578e+05</td> <td> 1.15e+04</td> <td>   31.178</td> <td> 0.000</td> <td> 3.35e+05</td> <td>  3.8e+05</td>
+  <th>C(zipcode)[T.98103]</th> <td> 3.487e+05</td> <td> 1.24e+04</td> <td>   28.231</td> <td> 0.000</td> <td> 3.25e+05</td> <td> 3.73e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98105]</th> <td> 5.046e+05</td> <td> 1.45e+04</td> <td>   34.807</td> <td> 0.000</td> <td> 4.76e+05</td> <td> 5.33e+05</td>
+  <th>C(zipcode)[T.98105]</th> <td> 4.844e+05</td> <td> 1.56e+04</td> <td>   31.024</td> <td> 0.000</td> <td> 4.54e+05</td> <td> 5.15e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98106]</th> <td> 1.294e+05</td> <td> 1.31e+04</td> <td>    9.850</td> <td> 0.000</td> <td> 1.04e+05</td> <td> 1.55e+05</td>
+  <th>C(zipcode)[T.98106]</th> <td> 1.621e+05</td> <td> 1.41e+04</td> <td>   11.502</td> <td> 0.000</td> <td> 1.34e+05</td> <td>  1.9e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98107]</th> <td> 3.635e+05</td> <td> 1.39e+04</td> <td>   26.091</td> <td> 0.000</td> <td> 3.36e+05</td> <td> 3.91e+05</td>
+  <th>C(zipcode)[T.98107]</th> <td> 3.571e+05</td> <td>  1.5e+04</td> <td>   23.830</td> <td> 0.000</td> <td> 3.28e+05</td> <td> 3.86e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98108]</th> <td> 1.235e+05</td> <td> 1.55e+04</td> <td>    7.962</td> <td> 0.000</td> <td> 9.31e+04</td> <td> 1.54e+05</td>
+  <th>C(zipcode)[T.98108]</th> <td> 1.345e+05</td> <td> 1.67e+04</td> <td>    8.063</td> <td> 0.000</td> <td> 1.02e+05</td> <td> 1.67e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98109]</th> <td> 5.311e+05</td> <td> 1.88e+04</td> <td>   28.320</td> <td> 0.000</td> <td> 4.94e+05</td> <td> 5.68e+05</td>
+  <th>C(zipcode)[T.98109]</th> <td> 5.173e+05</td> <td> 2.02e+04</td> <td>   25.637</td> <td> 0.000</td> <td> 4.78e+05</td> <td> 5.57e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98112]</th> <td> 6.294e+05</td> <td> 1.39e+04</td> <td>   45.296</td> <td> 0.000</td> <td> 6.02e+05</td> <td> 6.57e+05</td>
+  <th>C(zipcode)[T.98112]</th> <td> 6.111e+05</td> <td>  1.5e+04</td> <td>   40.856</td> <td> 0.000</td> <td> 5.82e+05</td> <td>  6.4e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98115]</th> <td> 3.562e+05</td> <td> 1.15e+04</td> <td>   30.901</td> <td> 0.000</td> <td> 3.34e+05</td> <td> 3.79e+05</td>
+  <th>C(zipcode)[T.98115]</th> <td>  3.47e+05</td> <td> 1.24e+04</td> <td>   27.968</td> <td> 0.000</td> <td> 3.23e+05</td> <td> 3.71e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98116]</th> <td> 3.376e+05</td> <td> 1.31e+04</td> <td>   25.783</td> <td> 0.000</td> <td> 3.12e+05</td> <td> 3.63e+05</td>
+  <th>C(zipcode)[T.98116]</th> <td> 3.279e+05</td> <td> 1.41e+04</td> <td>   23.256</td> <td> 0.000</td> <td>    3e+05</td> <td> 3.55e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98117]</th> <td> 3.402e+05</td> <td> 1.17e+04</td> <td>   29.178</td> <td> 0.000</td> <td> 3.17e+05</td> <td> 3.63e+05</td>
+  <th>C(zipcode)[T.98117]</th> <td> 3.398e+05</td> <td> 1.25e+04</td> <td>   27.080</td> <td> 0.000</td> <td> 3.15e+05</td> <td> 3.64e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98118]</th> <td> 1.809e+05</td> <td> 1.19e+04</td> <td>   15.199</td> <td> 0.000</td> <td> 1.58e+05</td> <td> 2.04e+05</td>
+  <th>C(zipcode)[T.98118]</th> <td> 2.023e+05</td> <td> 1.28e+04</td> <td>   15.841</td> <td> 0.000</td> <td> 1.77e+05</td> <td> 2.27e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98119]</th> <td> 5.189e+05</td> <td> 1.56e+04</td> <td>   33.326</td> <td> 0.000</td> <td> 4.88e+05</td> <td> 5.49e+05</td>
+  <th>C(zipcode)[T.98119]</th> <td> 5.023e+05</td> <td> 1.67e+04</td> <td>   29.995</td> <td> 0.000</td> <td> 4.69e+05</td> <td> 5.35e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98122]</th> <td> 3.637e+05</td> <td> 1.36e+04</td> <td>   26.783</td> <td> 0.000</td> <td> 3.37e+05</td> <td>  3.9e+05</td>
+  <th>C(zipcode)[T.98122]</th> <td> 3.517e+05</td> <td> 1.46e+04</td> <td>   24.071</td> <td> 0.000</td> <td> 3.23e+05</td> <td>  3.8e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98125]</th> <td> 2.281e+05</td> <td> 1.24e+04</td> <td>   18.330</td> <td> 0.000</td> <td> 2.04e+05</td> <td> 2.53e+05</td>
+  <th>C(zipcode)[T.98125]</th> <td> 2.308e+05</td> <td> 1.34e+04</td> <td>   17.240</td> <td> 0.000</td> <td> 2.05e+05</td> <td> 2.57e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98126]</th> <td> 2.205e+05</td> <td> 1.29e+04</td> <td>   17.085</td> <td> 0.000</td> <td> 1.95e+05</td> <td> 2.46e+05</td>
+  <th>C(zipcode)[T.98126]</th> <td> 2.367e+05</td> <td> 1.39e+04</td> <td>   17.075</td> <td> 0.000</td> <td> 2.09e+05</td> <td> 2.64e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98133]</th> <td> 1.745e+05</td> <td>  1.2e+04</td> <td>   14.601</td> <td> 0.000</td> <td> 1.51e+05</td> <td> 1.98e+05</td>
+  <th>C(zipcode)[T.98133]</th> <td> 1.746e+05</td> <td> 1.29e+04</td> <td>   13.581</td> <td> 0.000</td> <td> 1.49e+05</td> <td>    2e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98136]</th> <td> 3.005e+05</td> <td> 1.39e+04</td> <td>   21.594</td> <td> 0.000</td> <td> 2.73e+05</td> <td> 3.28e+05</td>
+  <th>C(zipcode)[T.98136]</th> <td> 2.991e+05</td> <td>  1.5e+04</td> <td>   19.980</td> <td> 0.000</td> <td>  2.7e+05</td> <td> 3.28e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98144]</th> <td> 3.035e+05</td> <td>  1.3e+04</td> <td>   23.397</td> <td> 0.000</td> <td> 2.78e+05</td> <td> 3.29e+05</td>
+  <th>C(zipcode)[T.98144]</th> <td> 2.999e+05</td> <td>  1.4e+04</td> <td>   21.490</td> <td> 0.000</td> <td> 2.73e+05</td> <td> 3.27e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98146]</th> <td> 1.412e+05</td> <td> 1.37e+04</td> <td>   10.313</td> <td> 0.000</td> <td> 1.14e+05</td> <td> 1.68e+05</td>
+  <th>C(zipcode)[T.98146]</th> <td>  1.72e+05</td> <td> 1.47e+04</td> <td>   11.709</td> <td> 0.000</td> <td> 1.43e+05</td> <td> 2.01e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98148]</th> <td> 7.346e+04</td> <td> 2.46e+04</td> <td>    2.986</td> <td> 0.003</td> <td> 2.52e+04</td> <td> 1.22e+05</td>
+  <th>C(zipcode)[T.98148]</th> <td> 9.032e+04</td> <td> 2.65e+04</td> <td>    3.412</td> <td> 0.001</td> <td> 3.84e+04</td> <td> 1.42e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98155]</th> <td> 1.686e+05</td> <td> 1.22e+04</td> <td>   13.845</td> <td> 0.000</td> <td> 1.45e+05</td> <td> 1.92e+05</td>
+  <th>C(zipcode)[T.98155]</th> <td> 1.718e+05</td> <td> 1.31e+04</td> <td>   13.118</td> <td> 0.000</td> <td> 1.46e+05</td> <td> 1.97e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98166]</th> <td> 1.333e+05</td> <td> 1.41e+04</td> <td>    9.434</td> <td> 0.000</td> <td> 1.06e+05</td> <td> 1.61e+05</td>
+  <th>C(zipcode)[T.98166]</th> <td> 1.364e+05</td> <td> 1.52e+04</td> <td>    8.979</td> <td> 0.000</td> <td> 1.07e+05</td> <td> 1.66e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98168]</th> <td> 5.181e+04</td> <td>  1.4e+04</td> <td>    3.707</td> <td> 0.000</td> <td> 2.44e+04</td> <td> 7.92e+04</td>
+  <th>C(zipcode)[T.98168]</th> <td> 1.014e+05</td> <td>  1.5e+04</td> <td>    6.774</td> <td> 0.000</td> <td> 7.21e+04</td> <td> 1.31e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98177]</th> <td> 2.578e+05</td> <td> 1.41e+04</td> <td>   18.304</td> <td> 0.000</td> <td>  2.3e+05</td> <td> 2.85e+05</td>
+  <th>C(zipcode)[T.98177]</th> <td> 2.582e+05</td> <td> 1.51e+04</td> <td>   17.057</td> <td> 0.000</td> <td> 2.29e+05</td> <td> 2.88e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98178]</th> <td> 7.333e+04</td> <td>  1.4e+04</td> <td>    5.234</td> <td> 0.000</td> <td> 4.59e+04</td> <td> 1.01e+05</td>
+  <th>C(zipcode)[T.98178]</th> <td> 9.797e+04</td> <td> 1.51e+04</td> <td>    6.508</td> <td> 0.000</td> <td> 6.85e+04</td> <td> 1.27e+05</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98188]</th> <td> 3.693e+04</td> <td> 1.73e+04</td> <td>    2.135</td> <td> 0.033</td> <td> 3033.328</td> <td> 7.08e+04</td>
+  <th>C(zipcode)[T.98188]</th> <td> 5.018e+04</td> <td> 1.86e+04</td> <td>    2.697</td> <td> 0.007</td> <td> 1.37e+04</td> <td> 8.66e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98198]</th> <td> 5.652e+04</td> <td> 1.37e+04</td> <td>    4.117</td> <td> 0.000</td> <td> 2.96e+04</td> <td> 8.34e+04</td>
+  <th>C(zipcode)[T.98198]</th> <td> 6.358e+04</td> <td> 1.48e+04</td> <td>    4.306</td> <td> 0.000</td> <td> 3.46e+04</td> <td> 9.25e+04</td>
 </tr>
 <tr>
-  <th>C(zipcode)[T.98199]</th> <td> 4.144e+05</td> <td> 1.32e+04</td> <td>   31.284</td> <td> 0.000</td> <td> 3.88e+05</td> <td>  4.4e+05</td>
+  <th>C(zipcode)[T.98199]</th> <td>  4.08e+05</td> <td> 1.43e+04</td> <td>   28.628</td> <td> 0.000</td> <td>  3.8e+05</td> <td> 4.36e+05</td>
 </tr>
 <tr>
-  <th>C(grade)[T.4]</th>       <td>-1.329e+05</td> <td> 1.75e+05</td> <td>   -0.761</td> <td> 0.447</td> <td>-4.75e+05</td> <td> 2.09e+05</td>
+  <th>grade</th>               <td> 6.215e+04</td> <td> 1877.292</td> <td>   33.108</td> <td> 0.000</td> <td> 5.85e+04</td> <td> 6.58e+04</td>
 </tr>
 <tr>
-  <th>C(grade)[T.5]</th>       <td>-1.617e+05</td> <td> 1.72e+05</td> <td>   -0.941</td> <td> 0.347</td> <td>-4.99e+05</td> <td> 1.75e+05</td>
+  <th>sqft_living</th>         <td>  179.9504</td> <td>    2.435</td> <td>   73.912</td> <td> 0.000</td> <td>  175.178</td> <td>  184.722</td>
 </tr>
 <tr>
-  <th>C(grade)[T.6]</th>       <td>-1.812e+05</td> <td> 1.72e+05</td> <td>   -1.056</td> <td> 0.291</td> <td>-5.17e+05</td> <td> 1.55e+05</td>
+  <th>sqft_living15</th>       <td>   40.8132</td> <td>    3.222</td> <td>   12.667</td> <td> 0.000</td> <td>   34.498</td> <td>   47.129</td>
 </tr>
 <tr>
-  <th>C(grade)[T.7]</th>       <td>-1.921e+05</td> <td> 1.72e+05</td> <td>   -1.120</td> <td> 0.263</td> <td>-5.28e+05</td> <td> 1.44e+05</td>
+  <th>condition_2</th>         <td> 1.187e+04</td> <td> 3.78e+04</td> <td>    0.314</td> <td> 0.753</td> <td>-6.22e+04</td> <td> 8.59e+04</td>
 </tr>
 <tr>
-  <th>C(grade)[T.8]</th>       <td>-1.735e+05</td> <td> 1.72e+05</td> <td>   -1.012</td> <td> 0.312</td> <td> -5.1e+05</td> <td> 1.63e+05</td>
+  <th>condition_3</th>         <td>-2.837e+04</td> <td>  3.5e+04</td> <td>   -0.811</td> <td> 0.418</td> <td> -9.7e+04</td> <td> 4.02e+04</td>
 </tr>
 <tr>
-  <th>C(grade)[T.9]</th>       <td>-9.851e+04</td> <td> 1.72e+05</td> <td>   -0.574</td> <td> 0.566</td> <td>-4.35e+05</td> <td> 2.38e+05</td>
+  <th>condition_4</th>         <td> 7145.7855</td> <td>  3.5e+04</td> <td>    0.204</td> <td> 0.838</td> <td>-6.15e+04</td> <td> 7.58e+04</td>
 </tr>
 <tr>
-  <th>C(grade)[T.10]</th>      <td>  4.03e+04</td> <td> 1.72e+05</td> <td>    0.235</td> <td> 0.814</td> <td>-2.96e+05</td> <td> 3.77e+05</td>
-</tr>
-<tr>
-  <th>C(grade)[T.11]</th>      <td> 2.656e+05</td> <td> 1.72e+05</td> <td>    1.545</td> <td> 0.122</td> <td>-7.14e+04</td> <td> 6.03e+05</td>
-</tr>
-<tr>
-  <th>C(grade)[T.12]</th>      <td> 7.521e+05</td> <td> 1.73e+05</td> <td>    4.352</td> <td> 0.000</td> <td> 4.13e+05</td> <td> 1.09e+06</td>
-</tr>
-<tr>
-  <th>C(grade)[T.13]</th>      <td> 1.783e+06</td> <td> 1.79e+05</td> <td>    9.984</td> <td> 0.000</td> <td> 1.43e+06</td> <td> 2.13e+06</td>
-</tr>
-<tr>
-  <th>sqft_living</th>         <td>  161.9099</td> <td>    2.285</td> <td>   70.871</td> <td> 0.000</td> <td>  157.432</td> <td>  166.388</td>
-</tr>
-<tr>
-  <th>sqft_living15</th>       <td>   36.3883</td> <td>    3.022</td> <td>   12.040</td> <td> 0.000</td> <td>   30.464</td> <td>   42.312</td>
+  <th>condition_5</th>         <td> 5.343e+04</td> <td> 3.52e+04</td> <td>    1.517</td> <td> 0.129</td> <td>-1.56e+04</td> <td> 1.22e+05</td>
 </tr>
 </table>
 <table class="simpletable">
 <tr>
-  <th>Omnibus:</th>       <td>20049.285</td> <th>  Durbin-Watson:     </th>  <td>   1.995</td>  
+  <th>Omnibus:</th>       <td>23232.521</td> <th>  Durbin-Watson:     </th>  <td>   1.982</td>  
 </tr>
 <tr>
-  <th>Prob(Omnibus):</th>  <td> 0.000</td>   <th>  Jarque-Bera (JB):  </th> <td>2674297.290</td>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>   <th>  Jarque-Bera (JB):  </th> <td>4782309.186</td>
 </tr>
 <tr>
-  <th>Skew:</th>           <td> 4.103</td>   <th>  Prob(JB):          </th>  <td>    0.00</td>  
+  <th>Skew:</th>           <td> 5.170</td>   <th>  Prob(JB):          </th>  <td>    0.00</td>  
 </tr>
 <tr>
-  <th>Kurtosis:</th>       <td>57.121</td>   <th>  Cond. No.          </th>  <td>1.50e+06</td>  
+  <th>Kurtosis:</th>       <td>75.467</td>   <th>  Cond. No.          </th>  <td>2.04e+05</td>  
 </tr>
-</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.5e+06. This might indicate that there are<br/>strong multicollinearity or other numerical problems.
+</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 2.04e+05. This might indicate that there are<br/>strong multicollinearity or other numerical problems.
 
 
-
-R-squared value: 0.78
 
 
 ```python
-# Check normalized values with historgrams and scatter
+# store model2 values to dict
+reg_mods['model2'] = {'vars':f2, 'r2':0.750, 's': 5.170, 'k': 75.467}
+
+reg_mods
 ```
 
-## Outliers
+
+
+
+    {'model1': {'vars': 'grade+sqft_living+bathrooms',
+      'r2': 0.536,
+      's': 3.293,
+      'k': 35.828},
+     'model2': {'vars': 'C(zipcode)+grade+sqft_living+sqft_living15+condition_2+condition_3+condition_4+condition_5',
+      'r2': 0.75,
+      's': 5.17,
+      'k': 75.467}}
+
+
+
+> Much higher R-squared but there are some fatal issues with this model:
+1. There are a handful of zipcodes with very high P-values. 
+2. Condition dummies have very high p-values.
+3. Skew: 5.170 (increased)
+4. Kurtosis: 75.467	(almost doubled from model1)
+
+> Let's drop condition and try running it again.
+
+## Model 3
+
+
+```python
+# create list of selected predictors
+pred3 = ['C(zipcode)','grade', 'sqft_living']
+
+# convert to string with + added
+f3 = '+'.join(pred3)
+
+# append target
+f ='price~'+f3 
+
+# Run model and show sumamry
+model = smf.ols(formula=f, data=df).fit()
+model.summary()
+```
+
+
+
+
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.744</td>  
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.743</td>  
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   874.7</td>  
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 07 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
+</tr>
+<tr>
+  <th>Time:</th>                 <td>01:43:44</td>     <th>  Log-Likelihood:    </th> <td>-2.9028e+05</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td> 21420</td>      <th>  AIC:               </th>  <td>5.807e+05</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td> 21348</td>      <th>  BIC:               </th>  <td>5.813e+05</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    71</td>      <th>                     </th>      <td> </td>     
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>     
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+           <td></td>              <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>           <td>-5.465e+05</td> <td> 1.43e+04</td> <td>  -38.190</td> <td> 0.000</td> <td>-5.75e+05</td> <td>-5.18e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98002]</th> <td> 4.496e+04</td> <td> 1.65e+04</td> <td>    2.719</td> <td> 0.007</td> <td> 1.26e+04</td> <td> 7.74e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98003]</th> <td>-6822.5330</td> <td> 1.49e+04</td> <td>   -0.457</td> <td> 0.648</td> <td>-3.61e+04</td> <td> 2.24e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98004]</th> <td> 7.897e+05</td> <td> 1.45e+04</td> <td>   54.481</td> <td> 0.000</td> <td> 7.61e+05</td> <td> 8.18e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98005]</th> <td> 3.065e+05</td> <td> 1.75e+04</td> <td>   17.538</td> <td> 0.000</td> <td> 2.72e+05</td> <td> 3.41e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98006]</th> <td> 2.911e+05</td> <td> 1.31e+04</td> <td>   22.254</td> <td> 0.000</td> <td> 2.65e+05</td> <td> 3.17e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98007]</th> <td> 2.408e+05</td> <td> 1.86e+04</td> <td>   12.926</td> <td> 0.000</td> <td> 2.04e+05</td> <td> 2.77e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98008]</th> <td> 2.968e+05</td> <td> 1.48e+04</td> <td>   20.029</td> <td> 0.000</td> <td> 2.68e+05</td> <td> 3.26e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98010]</th> <td> 9.059e+04</td> <td> 2.11e+04</td> <td>    4.284</td> <td> 0.000</td> <td> 4.91e+04</td> <td> 1.32e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98011]</th> <td> 1.108e+05</td> <td> 1.66e+04</td> <td>    6.669</td> <td> 0.000</td> <td> 7.82e+04</td> <td> 1.43e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98014]</th> <td> 1.266e+05</td> <td> 1.95e+04</td> <td>    6.506</td> <td> 0.000</td> <td> 8.85e+04</td> <td> 1.65e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98019]</th> <td> 7.734e+04</td> <td> 1.67e+04</td> <td>    4.626</td> <td> 0.000</td> <td> 4.46e+04</td> <td>  1.1e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98022]</th> <td> 5.591e+04</td> <td> 1.57e+04</td> <td>    3.567</td> <td> 0.000</td> <td> 2.52e+04</td> <td> 8.66e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98023]</th> <td>-2.971e+04</td> <td> 1.29e+04</td> <td>   -2.295</td> <td> 0.022</td> <td>-5.51e+04</td> <td>-4339.713</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98024]</th> <td> 1.954e+05</td> <td> 2.32e+04</td> <td>    8.436</td> <td> 0.000</td> <td>  1.5e+05</td> <td> 2.41e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98027]</th> <td> 1.597e+05</td> <td> 1.35e+04</td> <td>   11.821</td> <td> 0.000</td> <td> 1.33e+05</td> <td> 1.86e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98028]</th> <td> 1.182e+05</td> <td> 1.48e+04</td> <td>    7.967</td> <td> 0.000</td> <td> 8.91e+04</td> <td> 1.47e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98029]</th> <td> 1.883e+05</td> <td> 1.44e+04</td> <td>   13.074</td> <td> 0.000</td> <td>  1.6e+05</td> <td> 2.17e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98030]</th> <td>-4392.7892</td> <td> 1.53e+04</td> <td>   -0.287</td> <td> 0.774</td> <td>-3.44e+04</td> <td> 2.56e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98031]</th> <td> 8757.3262</td> <td>  1.5e+04</td> <td>    0.584</td> <td> 0.559</td> <td>-2.06e+04</td> <td> 3.81e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98032]</th> <td> 1.241e+04</td> <td> 1.95e+04</td> <td>    0.638</td> <td> 0.524</td> <td>-2.57e+04</td> <td> 5.06e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98033]</th> <td> 3.806e+05</td> <td> 1.34e+04</td> <td>   28.512</td> <td> 0.000</td> <td> 3.54e+05</td> <td> 4.07e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98034]</th> <td> 2.133e+05</td> <td> 1.27e+04</td> <td>   16.821</td> <td> 0.000</td> <td> 1.88e+05</td> <td> 2.38e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98038]</th> <td> 1.851e+04</td> <td> 1.25e+04</td> <td>    1.481</td> <td> 0.139</td> <td>-5984.381</td> <td>  4.3e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98039]</th> <td> 1.378e+06</td> <td> 2.85e+04</td> <td>   48.288</td> <td> 0.000</td> <td> 1.32e+06</td> <td> 1.43e+06</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98040]</th> <td>  5.73e+05</td> <td>  1.5e+04</td> <td>   38.259</td> <td> 0.000</td> <td> 5.44e+05</td> <td> 6.02e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98042]</th> <td> 6777.9856</td> <td> 1.27e+04</td> <td>    0.535</td> <td> 0.593</td> <td> -1.8e+04</td> <td> 3.16e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98045]</th> <td> 1.059e+05</td> <td>  1.6e+04</td> <td>    6.619</td> <td> 0.000</td> <td> 7.46e+04</td> <td> 1.37e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98052]</th> <td> 2.178e+05</td> <td> 1.26e+04</td> <td>   17.280</td> <td> 0.000</td> <td> 1.93e+05</td> <td> 2.42e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98053]</th> <td> 1.927e+05</td> <td> 1.36e+04</td> <td>   14.163</td> <td> 0.000</td> <td> 1.66e+05</td> <td> 2.19e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98055]</th> <td> 5.831e+04</td> <td> 1.52e+04</td> <td>    3.843</td> <td> 0.000</td> <td> 2.86e+04</td> <td> 8.81e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98056]</th> <td> 1.142e+05</td> <td> 1.35e+04</td> <td>    8.446</td> <td> 0.000</td> <td> 8.77e+04</td> <td> 1.41e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98058]</th> <td> 2.656e+04</td> <td> 1.32e+04</td> <td>    2.015</td> <td> 0.044</td> <td>  719.117</td> <td> 5.24e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98059]</th> <td> 7.649e+04</td> <td> 1.31e+04</td> <td>    5.831</td> <td> 0.000</td> <td> 5.08e+04</td> <td> 1.02e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98065]</th> <td> 7.965e+04</td> <td> 1.45e+04</td> <td>    5.475</td> <td> 0.000</td> <td> 5.11e+04</td> <td> 1.08e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98070]</th> <td> 2.111e+05</td> <td> 1.99e+04</td> <td>   10.610</td> <td> 0.000</td> <td> 1.72e+05</td> <td>  2.5e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98072]</th> <td> 1.493e+05</td> <td>  1.5e+04</td> <td>    9.946</td> <td> 0.000</td> <td>  1.2e+05</td> <td> 1.79e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98074]</th> <td> 1.724e+05</td> <td> 1.34e+04</td> <td>   12.862</td> <td> 0.000</td> <td> 1.46e+05</td> <td> 1.99e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98075]</th> <td> 1.838e+05</td> <td> 1.41e+04</td> <td>   13.055</td> <td> 0.000</td> <td> 1.56e+05</td> <td> 2.11e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98077]</th> <td>  1.22e+05</td> <td> 1.66e+04</td> <td>    7.329</td> <td> 0.000</td> <td> 8.94e+04</td> <td> 1.55e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98092]</th> <td>-3.848e+04</td> <td>  1.4e+04</td> <td>   -2.748</td> <td> 0.006</td> <td>-6.59e+04</td> <td> -1.1e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98102]</th> <td> 5.073e+05</td> <td> 2.08e+04</td> <td>   24.399</td> <td> 0.000</td> <td> 4.67e+05</td> <td> 5.48e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98103]</th> <td> 3.465e+05</td> <td> 1.25e+04</td> <td>   27.813</td> <td> 0.000</td> <td> 3.22e+05</td> <td> 3.71e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98105]</th> <td> 4.995e+05</td> <td> 1.58e+04</td> <td>   31.674</td> <td> 0.000</td> <td> 4.69e+05</td> <td>  5.3e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98106]</th> <td> 1.474e+05</td> <td> 1.42e+04</td> <td>   10.359</td> <td> 0.000</td> <td> 1.19e+05</td> <td> 1.75e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98107]</th> <td> 3.538e+05</td> <td> 1.51e+04</td> <td>   23.382</td> <td> 0.000</td> <td> 3.24e+05</td> <td> 3.83e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98108]</th> <td> 1.313e+05</td> <td> 1.69e+04</td> <td>    7.786</td> <td> 0.000</td> <td> 9.82e+04</td> <td> 1.64e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98109]</th> <td> 5.241e+05</td> <td> 2.04e+04</td> <td>   25.693</td> <td> 0.000</td> <td> 4.84e+05</td> <td> 5.64e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98112]</th> <td> 6.272e+05</td> <td> 1.51e+04</td> <td>   41.511</td> <td> 0.000</td> <td> 5.98e+05</td> <td> 6.57e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98115]</th> <td> 3.497e+05</td> <td> 1.25e+04</td> <td>   27.899</td> <td> 0.000</td> <td> 3.25e+05</td> <td> 3.74e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98116]</th> <td> 3.311e+05</td> <td> 1.42e+04</td> <td>   23.264</td> <td> 0.000</td> <td> 3.03e+05</td> <td> 3.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98117]</th> <td> 3.395e+05</td> <td> 1.27e+04</td> <td>   26.813</td> <td> 0.000</td> <td> 3.15e+05</td> <td> 3.64e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98118]</th> <td> 1.999e+05</td> <td> 1.29e+04</td> <td>   15.486</td> <td> 0.000</td> <td> 1.75e+05</td> <td> 2.25e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98119]</th> <td> 5.032e+05</td> <td> 1.69e+04</td> <td>   29.725</td> <td> 0.000</td> <td>  4.7e+05</td> <td> 5.36e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98122]</th> <td> 3.491e+05</td> <td> 1.48e+04</td> <td>   23.655</td> <td> 0.000</td> <td>  3.2e+05</td> <td> 3.78e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98125]</th> <td> 2.273e+05</td> <td> 1.35e+04</td> <td>   16.792</td> <td> 0.000</td> <td> 2.01e+05</td> <td> 2.54e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98126]</th> <td> 2.314e+05</td> <td>  1.4e+04</td> <td>   16.541</td> <td> 0.000</td> <td> 2.04e+05</td> <td> 2.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98133]</th> <td> 1.753e+05</td> <td>  1.3e+04</td> <td>   13.494</td> <td> 0.000</td> <td>  1.5e+05</td> <td> 2.01e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98136]</th> <td> 2.986e+05</td> <td> 1.51e+04</td> <td>   19.734</td> <td> 0.000</td> <td> 2.69e+05</td> <td> 3.28e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98144]</th> <td> 3.033e+05</td> <td> 1.41e+04</td> <td>   21.508</td> <td> 0.000</td> <td> 2.76e+05</td> <td> 3.31e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98146]</th> <td> 1.656e+05</td> <td> 1.49e+04</td> <td>   11.149</td> <td> 0.000</td> <td> 1.36e+05</td> <td> 1.95e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98148]</th> <td> 8.162e+04</td> <td> 2.68e+04</td> <td>    3.050</td> <td> 0.002</td> <td> 2.92e+04</td> <td> 1.34e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98155]</th> <td>  1.75e+05</td> <td> 1.32e+04</td> <td>   13.217</td> <td> 0.000</td> <td> 1.49e+05</td> <td> 2.01e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98166]</th> <td> 1.458e+05</td> <td> 1.53e+04</td> <td>    9.498</td> <td> 0.000</td> <td> 1.16e+05</td> <td> 1.76e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98168]</th> <td> 9.344e+04</td> <td> 1.51e+04</td> <td>    6.173</td> <td> 0.000</td> <td> 6.38e+04</td> <td> 1.23e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98177]</th> <td> 2.709e+05</td> <td> 1.53e+04</td> <td>   17.706</td> <td> 0.000</td> <td> 2.41e+05</td> <td> 3.01e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98178]</th> <td> 9.334e+04</td> <td> 1.52e+04</td> <td>    6.133</td> <td> 0.000</td> <td> 6.35e+04</td> <td> 1.23e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98188]</th> <td> 4.351e+04</td> <td> 1.88e+04</td> <td>    2.313</td> <td> 0.021</td> <td> 6641.555</td> <td> 8.04e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98198]</th> <td> 6.591e+04</td> <td> 1.49e+04</td> <td>    4.414</td> <td> 0.000</td> <td> 3.66e+04</td> <td> 9.52e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98199]</th> <td> 4.163e+05</td> <td> 1.44e+04</td> <td>   28.904</td> <td> 0.000</td> <td> 3.88e+05</td> <td> 4.45e+05</td>
+</tr>
+<tr>
+  <th>grade</th>               <td> 6.203e+04</td> <td> 1780.697</td> <td>   34.836</td> <td> 0.000</td> <td> 5.85e+04</td> <td> 6.55e+04</td>
+</tr>
+<tr>
+  <th>sqft_living</th>         <td>  197.1375</td> <td>    2.208</td> <td>   89.276</td> <td> 0.000</td> <td>  192.809</td> <td>  201.466</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>22502.250</td> <th>  Durbin-Watson:     </th>  <td>   1.978</td>  
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>   <th>  Jarque-Bera (JB):  </th> <td>4023694.335</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 4.927</td>   <th>  Prob(JB):          </th>  <td>    0.00</td>  
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td>69.417</td>   <th>  Cond. No.          </th>  <td>1.49e+05</td>  
+</tr>
+</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.49e+05. This might indicate that there are<br/>strong multicollinearity or other numerical problems.
+
+
+
+
+```python
+reg_mods['model3'] = {'vars':f3, 'r2':0.744, 's': 4.927, 'k':69.417 }
+reg_mods
+```
+
+
+
+
+    {'model1': {'vars': 'grade+sqft_living+bathrooms',
+      'r2': 0.536,
+      's': 3.293,
+      'k': 35.828},
+     'model2': {'vars': 'C(zipcode)+grade+sqft_living+sqft_living15+condition_2+condition_3+condition_4+condition_5',
+      'r2': 0.75,
+      's': 5.17,
+      'k': 75.467},
+     'model3': {'vars': 'C(zipcode)+grade+sqft_living',
+      'r2': 0.744,
+      's': 4.927,
+      'k': 69.417}}
+
+
+
+> R-squared value slightly decreased 
+
+> P-values look good
+
+> Skew and Kurtosis decreased slightly (compared to Model2 at least)
+
+### Error Terms ('grade')
+
+
+```python
+# Visualize Error Terms for Grade
+f = 'price~grade'
+model = ols(formula=f, data=df).fit()
+fig = plt.figure(figsize=(15,8))
+fig = sm.graphics.plot_regress_exog(model, 'grade', fig=fig)
+plt.show()
+```
+
+
+![png](output_212_0.png)
+
+
+## Model 4
+
+
+```python
+# checking same model with GRADE as cat.
+pred4 = ['C(zipcode)', 'C(grade)', 'sqft_living']
+
+# convert to string with + added
+f4 = '+'.join(pred4)
+
+# append target
+f ='price~'+f4 
+
+# Run model and show sumamry
+model = smf.ols(formula=f, data=df).fit()
+model.summary()
+```
+
+
+
+
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.783</td>  
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.782</td>  
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   960.1</td>  
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 07 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
+</tr>
+<tr>
+  <th>Time:</th>                 <td>01:57:11</td>     <th>  Log-Likelihood:    </th> <td>-2.8854e+05</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td> 21420</td>      <th>  AIC:               </th>  <td>5.772e+05</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td> 21339</td>      <th>  BIC:               </th>  <td>5.779e+05</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    80</td>      <th>                     </th>      <td> </td>     
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>     
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+           <td></td>              <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>           <td> 1.245e+05</td> <td> 1.72e+05</td> <td>    0.722</td> <td> 0.470</td> <td>-2.13e+05</td> <td> 4.62e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98002]</th> <td> 1.512e+04</td> <td> 1.53e+04</td> <td>    0.991</td> <td> 0.322</td> <td>-1.48e+04</td> <td>  4.5e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98003]</th> <td> 2575.7351</td> <td> 1.38e+04</td> <td>    0.187</td> <td> 0.852</td> <td>-2.44e+04</td> <td> 2.96e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98004]</th> <td> 7.673e+05</td> <td> 1.34e+04</td> <td>   57.349</td> <td> 0.000</td> <td> 7.41e+05</td> <td> 7.94e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98005]</th> <td>  3.08e+05</td> <td> 1.61e+04</td> <td>   19.095</td> <td> 0.000</td> <td> 2.76e+05</td> <td>  3.4e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98006]</th> <td> 2.688e+05</td> <td> 1.21e+04</td> <td>   22.252</td> <td> 0.000</td> <td> 2.45e+05</td> <td> 2.92e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98007]</th> <td> 2.533e+05</td> <td> 1.72e+04</td> <td>   14.742</td> <td> 0.000</td> <td>  2.2e+05</td> <td> 2.87e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98008]</th> <td> 3.092e+05</td> <td> 1.37e+04</td> <td>   22.621</td> <td> 0.000</td> <td> 2.82e+05</td> <td> 3.36e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98010]</th> <td> 7.262e+04</td> <td> 1.95e+04</td> <td>    3.721</td> <td> 0.000</td> <td> 3.44e+04</td> <td> 1.11e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98011]</th> <td> 1.298e+05</td> <td> 1.53e+04</td> <td>    8.473</td> <td> 0.000</td> <td> 9.98e+04</td> <td>  1.6e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98014]</th> <td> 1.022e+05</td> <td>  1.8e+04</td> <td>    5.685</td> <td> 0.000</td> <td>  6.7e+04</td> <td> 1.37e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98019]</th> <td> 8.799e+04</td> <td> 1.54e+04</td> <td>    5.706</td> <td> 0.000</td> <td> 5.78e+04</td> <td> 1.18e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98022]</th> <td> 4.724e+04</td> <td> 1.45e+04</td> <td>    3.263</td> <td> 0.001</td> <td> 1.89e+04</td> <td> 7.56e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98023]</th> <td>-2.411e+04</td> <td> 1.19e+04</td> <td>   -2.019</td> <td> 0.044</td> <td>-4.75e+04</td> <td> -699.359</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98024]</th> <td> 1.756e+05</td> <td> 2.14e+04</td> <td>    8.216</td> <td> 0.000</td> <td> 1.34e+05</td> <td> 2.17e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98027]</th> <td> 1.618e+05</td> <td> 1.25e+04</td> <td>   12.976</td> <td> 0.000</td> <td> 1.37e+05</td> <td> 1.86e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98028]</th> <td> 1.348e+05</td> <td> 1.37e+04</td> <td>    9.853</td> <td> 0.000</td> <td> 1.08e+05</td> <td> 1.62e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98029]</th> <td> 2.091e+05</td> <td> 1.33e+04</td> <td>   15.713</td> <td> 0.000</td> <td> 1.83e+05</td> <td> 2.35e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98030]</th> <td> 2521.7309</td> <td> 1.41e+04</td> <td>    0.179</td> <td> 0.858</td> <td>-2.51e+04</td> <td> 3.02e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98031]</th> <td> 1.681e+04</td> <td> 1.38e+04</td> <td>    1.215</td> <td> 0.224</td> <td>-1.03e+04</td> <td> 4.39e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98032]</th> <td> 7757.5538</td> <td>  1.8e+04</td> <td>    0.432</td> <td> 0.666</td> <td>-2.74e+04</td> <td> 4.29e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98033]</th> <td> 3.736e+05</td> <td> 1.23e+04</td> <td>   30.325</td> <td> 0.000</td> <td> 3.49e+05</td> <td> 3.98e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98034]</th> <td> 2.135e+05</td> <td> 1.17e+04</td> <td>   18.255</td> <td> 0.000</td> <td> 1.91e+05</td> <td> 2.36e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98038]</th> <td>  3.13e+04</td> <td> 1.15e+04</td> <td>    2.715</td> <td> 0.007</td> <td> 8707.828</td> <td> 5.39e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98039]</th> <td> 1.254e+06</td> <td> 2.64e+04</td> <td>   47.461</td> <td> 0.000</td> <td>  1.2e+06</td> <td> 1.31e+06</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98040]</th> <td>  5.62e+05</td> <td> 1.38e+04</td> <td>   40.625</td> <td> 0.000</td> <td> 5.35e+05</td> <td> 5.89e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98042]</th> <td> 1.102e+04</td> <td> 1.17e+04</td> <td>    0.944</td> <td> 0.345</td> <td>-1.19e+04</td> <td> 3.39e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98045]</th> <td> 1.055e+05</td> <td> 1.48e+04</td> <td>    7.145</td> <td> 0.000</td> <td> 7.65e+04</td> <td> 1.34e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98052]</th> <td> 2.363e+05</td> <td> 1.16e+04</td> <td>   20.305</td> <td> 0.000</td> <td> 2.13e+05</td> <td> 2.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98053]</th> <td> 2.027e+05</td> <td> 1.26e+04</td> <td>   16.150</td> <td> 0.000</td> <td> 1.78e+05</td> <td> 2.27e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98055]</th> <td> 4.796e+04</td> <td>  1.4e+04</td> <td>    3.425</td> <td> 0.001</td> <td> 2.05e+04</td> <td> 7.54e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98056]</th> <td> 1.059e+05</td> <td> 1.25e+04</td> <td>    8.485</td> <td> 0.000</td> <td> 8.15e+04</td> <td>  1.3e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98058]</th> <td> 3.368e+04</td> <td> 1.22e+04</td> <td>    2.768</td> <td> 0.006</td> <td> 9829.716</td> <td> 5.75e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98059]</th> <td> 7.623e+04</td> <td> 1.21e+04</td> <td>    6.296</td> <td> 0.000</td> <td> 5.25e+04</td> <td>    1e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98065]</th> <td> 9.139e+04</td> <td> 1.34e+04</td> <td>    6.810</td> <td> 0.000</td> <td> 6.51e+04</td> <td> 1.18e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98070]</th> <td> 2.006e+05</td> <td> 1.84e+04</td> <td>   10.927</td> <td> 0.000</td> <td> 1.65e+05</td> <td> 2.37e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98072]</th> <td> 1.588e+05</td> <td> 1.38e+04</td> <td>   11.471</td> <td> 0.000</td> <td> 1.32e+05</td> <td> 1.86e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98074]</th> <td> 1.779e+05</td> <td> 1.24e+04</td> <td>   14.367</td> <td> 0.000</td> <td> 1.54e+05</td> <td> 2.02e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98075]</th> <td> 1.812e+05</td> <td>  1.3e+04</td> <td>   13.899</td> <td> 0.000</td> <td> 1.56e+05</td> <td> 2.07e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98077]</th> <td>  1.09e+05</td> <td> 1.54e+04</td> <td>    7.093</td> <td> 0.000</td> <td> 7.89e+04</td> <td> 1.39e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98092]</th> <td> -2.21e+04</td> <td> 1.29e+04</td> <td>   -1.710</td> <td> 0.087</td> <td>-4.74e+04</td> <td> 3232.225</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98102]</th> <td> 4.813e+05</td> <td> 1.92e+04</td> <td>   25.067</td> <td> 0.000</td> <td> 4.44e+05</td> <td> 5.19e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98103]</th> <td> 3.492e+05</td> <td> 1.15e+04</td> <td>   30.387</td> <td> 0.000</td> <td> 3.27e+05</td> <td> 3.72e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98105]</th> <td> 5.055e+05</td> <td> 1.45e+04</td> <td>   34.753</td> <td> 0.000</td> <td> 4.77e+05</td> <td> 5.34e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98106]</th> <td>  1.19e+05</td> <td> 1.31e+04</td> <td>    9.051</td> <td> 0.000</td> <td> 9.32e+04</td> <td> 1.45e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98107]</th> <td> 3.556e+05</td> <td>  1.4e+04</td> <td>   25.463</td> <td> 0.000</td> <td> 3.28e+05</td> <td> 3.83e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98108]</th> <td> 1.179e+05</td> <td> 1.56e+04</td> <td>    7.578</td> <td> 0.000</td> <td> 8.74e+04</td> <td> 1.48e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98109]</th> <td> 5.284e+05</td> <td> 1.88e+04</td> <td>   28.083</td> <td> 0.000</td> <td> 4.91e+05</td> <td> 5.65e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98112]</th> <td> 6.313e+05</td> <td> 1.39e+04</td> <td>   45.283</td> <td> 0.000</td> <td> 6.04e+05</td> <td> 6.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98115]</th> <td> 3.519e+05</td> <td> 1.16e+04</td> <td>   30.437</td> <td> 0.000</td> <td> 3.29e+05</td> <td> 3.75e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98116]</th> <td> 3.315e+05</td> <td> 1.31e+04</td> <td>   25.251</td> <td> 0.000</td> <td> 3.06e+05</td> <td> 3.57e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98117]</th> <td> 3.321e+05</td> <td> 1.17e+04</td> <td>   28.439</td> <td> 0.000</td> <td> 3.09e+05</td> <td> 3.55e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98118]</th> <td> 1.767e+05</td> <td> 1.19e+04</td> <td>   14.804</td> <td> 0.000</td> <td> 1.53e+05</td> <td>    2e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98119]</th> <td> 5.144e+05</td> <td> 1.56e+04</td> <td>   32.937</td> <td> 0.000</td> <td> 4.84e+05</td> <td> 5.45e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98122]</th> <td> 3.581e+05</td> <td> 1.36e+04</td> <td>   26.294</td> <td> 0.000</td> <td> 3.31e+05</td> <td> 3.85e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98125]</th> <td> 2.245e+05</td> <td> 1.25e+04</td> <td>   17.984</td> <td> 0.000</td> <td>    2e+05</td> <td> 2.49e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98126]</th> <td> 2.106e+05</td> <td> 1.29e+04</td> <td>   16.293</td> <td> 0.000</td> <td> 1.85e+05</td> <td> 2.36e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98133]</th> <td>  1.69e+05</td> <td>  1.2e+04</td> <td>   14.107</td> <td> 0.000</td> <td> 1.46e+05</td> <td> 1.93e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98136]</th> <td>  2.96e+05</td> <td>  1.4e+04</td> <td>   21.210</td> <td> 0.000</td> <td> 2.69e+05</td> <td> 3.23e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98144]</th> <td> 2.998e+05</td> <td>  1.3e+04</td> <td>   23.044</td> <td> 0.000</td> <td> 2.74e+05</td> <td> 3.25e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98146]</th> <td> 1.356e+05</td> <td> 1.37e+04</td> <td>    9.875</td> <td> 0.000</td> <td> 1.09e+05</td> <td> 1.62e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98148]</th> <td> 7.102e+04</td> <td> 2.47e+04</td> <td>    2.877</td> <td> 0.004</td> <td> 2.26e+04</td> <td> 1.19e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98155]</th> <td> 1.667e+05</td> <td> 1.22e+04</td> <td>   13.648</td> <td> 0.000</td> <td> 1.43e+05</td> <td> 1.91e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98166]</th> <td> 1.323e+05</td> <td> 1.42e+04</td> <td>    9.337</td> <td> 0.000</td> <td> 1.05e+05</td> <td>  1.6e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98168]</th> <td>  4.74e+04</td> <td>  1.4e+04</td> <td>    3.381</td> <td> 0.001</td> <td> 1.99e+04</td> <td> 7.49e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98177]</th> <td> 2.619e+05</td> <td> 1.41e+04</td> <td>   18.538</td> <td> 0.000</td> <td> 2.34e+05</td> <td>  2.9e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98178]</th> <td>  7.11e+04</td> <td> 1.41e+04</td> <td>    5.058</td> <td> 0.000</td> <td> 4.36e+04</td> <td> 9.87e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98188]</th> <td> 3.256e+04</td> <td> 1.73e+04</td> <td>    1.877</td> <td> 0.061</td> <td>-1445.858</td> <td> 6.66e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98198]</th> <td> 5.515e+04</td> <td> 1.38e+04</td> <td>    4.003</td> <td> 0.000</td> <td> 2.81e+04</td> <td> 8.21e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98199]</th> <td> 4.127e+05</td> <td> 1.33e+04</td> <td>   31.052</td> <td> 0.000</td> <td> 3.87e+05</td> <td> 4.39e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.4]</th>       <td>-1.297e+05</td> <td> 1.75e+05</td> <td>   -0.740</td> <td> 0.459</td> <td>-4.73e+05</td> <td> 2.14e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.5]</th>       <td>-1.642e+05</td> <td> 1.72e+05</td> <td>   -0.952</td> <td> 0.341</td> <td>-5.02e+05</td> <td> 1.74e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.6]</th>       <td>-1.846e+05</td> <td> 1.72e+05</td> <td>   -1.073</td> <td> 0.283</td> <td>-5.22e+05</td> <td> 1.53e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.7]</th>       <td> -1.93e+05</td> <td> 1.72e+05</td> <td>   -1.122</td> <td> 0.262</td> <td> -5.3e+05</td> <td> 1.44e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.8]</th>       <td>-1.683e+05</td> <td> 1.72e+05</td> <td>   -0.978</td> <td> 0.328</td> <td>-5.06e+05</td> <td> 1.69e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.9]</th>       <td>-8.396e+04</td> <td> 1.72e+05</td> <td>   -0.488</td> <td> 0.626</td> <td>-4.21e+05</td> <td> 2.54e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.10]</th>      <td> 6.008e+04</td> <td> 1.72e+05</td> <td>    0.349</td> <td> 0.727</td> <td>-2.78e+05</td> <td> 3.98e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.11]</th>      <td> 2.922e+05</td> <td> 1.72e+05</td> <td>    1.694</td> <td> 0.090</td> <td>-4.59e+04</td> <td>  6.3e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.12]</th>      <td> 7.805e+05</td> <td> 1.73e+05</td> <td>    4.502</td> <td> 0.000</td> <td> 4.41e+05</td> <td> 1.12e+06</td>
+</tr>
+<tr>
+  <th>C(grade)[T.13]</th>      <td> 1.793e+06</td> <td> 1.79e+05</td> <td>   10.005</td> <td> 0.000</td> <td> 1.44e+06</td> <td> 2.14e+06</td>
+</tr>
+<tr>
+  <th>sqft_living</th>         <td>  173.6159</td> <td>    2.074</td> <td>   83.697</td> <td> 0.000</td> <td>  169.550</td> <td>  177.682</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>19794.031</td> <th>  Durbin-Watson:     </th>  <td>   1.994</td>  
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>   <th>  Jarque-Bera (JB):  </th> <td>2492038.612</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 4.032</td>   <th>  Prob(JB):          </th>  <td>    0.00</td>  
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td>55.222</td>   <th>  Cond. No.          </th>  <td>1.11e+06</td>  
+</tr>
+</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.11e+06. This might indicate that there are<br/>strong multicollinearity or other numerical problems.
+
+
+
+
+```python
+reg_mods['model4'] = {'vars': f4, 'r2':0.783, 's':4.032,'k':55.222 }
+reg_mods
+```
+
+
+
+
+    {'model1': {'vars': 'grade+sqft_living+bathrooms',
+      'r2': 0.536,
+      's': 3.293,
+      'k': 35.828},
+     'model2': {'vars': 'C(zipcode)+grade+sqft_living+sqft_living15+condition_2+condition_3+condition_4+condition_5',
+      'r2': 0.75,
+      's': 5.17,
+      'k': 75.467},
+     'model3': {'vars': 'C(zipcode)+grade+sqft_living',
+      'r2': 0.744,
+      's': 4.927,
+      'k': 69.417},
+     'model4': {'vars': 'C(zipcode)+C(grade)+sqft_living',
+      'r2': 0.783,
+      's': 4.032,
+      'k': 55.222}}
+
+
+
+> R-squared value increased from 0.75 to 0.78 - better.  
+
+> P-values for Grade as a categorical are horrible except for scores of 11, 12, and 13. This could mean we recommend Grade as a factor still, with the requirement that the home score above 10 in order to have an impact on price. 
+
+> Kurtosis and Skew both decreased to levels lower than models 2 and 3. However, the model would most likely benefit further from scaling/normalization. 
+
+### QQ Plots
+Investigate high p-values
+
+
+```python
+import scipy.stats as stats
+residuals = model.resid
+fig = sm.graphics.qqplot(residuals, dist=stats.norm, line='45', fit=True)
+fig.show()
+```
+
+
+![png](output_218_0.png)
+
+
+> This is not what we want to see...Let's take a closer look at the outliers and find out if removing them helps at all. If not, we may need to drop Grade from the model.
+
+## Model 5
+
+### Outliers
 
 **QUESTION: Does removing outliers improve the distribution?**
 
-## Scaling / Normalization
 
-The dataset's remaining features vary significantly in magnitude which will throw off the R2 coefficient (essentially giving the false impression that some variables are less important).
+```python
+# Visualize outliers with boxplot for grade
+x = 'grade'
+y = 'price'
+
+plt.style.use('seaborn')
+fig, ax = plt.subplots(ncols=1,figsize=(12,6))
+
+# iterate over categorical vars to build boxplots of price distributions
+
+sns.boxplot(data=df, x=x, y=y, ax=ax)
+# Create keywords for .set_xticklabels()
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
+                  fontsize='x-large',   
+                  rotation=45)
+
+ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
+
+title='Grade Boxplot with Outliers'
+ax.set_title(title.title())
+ax.set_xlabel('grade')
+ax.set_ylabel('price')
+fig.tight_layout()
+```
+
+
+![png](output_222_0.png)
+
+
+
+```python
+# visualize outliers with boxplot for zipcode
+x = 'zipcode'
+y = 'price'
+
+plt.style.use('seaborn')
+fig, ax = plt.subplots(ncols=1,figsize=(20,20))
+
+# iterate over categorical vars to build boxplots of price distributions
+
+sns.boxplot(data=df, x=x, y=y, ax=ax)
+# Create keywords for .set_xticklabels()
+tick_kwds = dict(horizontalalignment='right', 
+                  fontweight='light', 
+                  fontsize='small',   
+                  rotation=45)
+
+ax.set_xticklabels(ax.get_xticklabels(),**tick_kwds)
+
+title='Zipcode Boxplot with Outliers'
+ax.set_title(title.title())
+ax.set_xlabel('sqft_living')
+ax.set_ylabel('price')
+fig.tight_layout()
+```
+
+
+![png](output_223_0.png)
+
+
+> NOTE: If the assumption about zipcode (i.e. location) being a critical factor for home price is correct, we could identify from this a list of zipcodes with the highest prices of homes based on median home values -- the assumption for this being that people will pay more for a house located in a certain area than they would for a house in other parts of the county (even if that house is much bigger, has a higher grade, etc). 
+
+
+```python
+# Detect actual number of outliers for our predictors
+
+out_vars = ['sqft_living', 'zipcode', 'grade', 'price']
+
+df_outs = df[out_vars]
+df_outs
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>sqft_living</th>
+      <th>zipcode</th>
+      <th>grade</th>
+      <th>price</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>1180</td>
+      <td>98178</td>
+      <td>7</td>
+      <td>221900.0</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2570</td>
+      <td>98125</td>
+      <td>7</td>
+      <td>538000.0</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>770</td>
+      <td>98028</td>
+      <td>6</td>
+      <td>180000.0</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>1960</td>
+      <td>98136</td>
+      <td>7</td>
+      <td>604000.0</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>1680</td>
+      <td>98074</td>
+      <td>8</td>
+      <td>510000.0</td>
+    </tr>
+    <tr>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <td>21592</td>
+      <td>1530</td>
+      <td>98103</td>
+      <td>8</td>
+      <td>360000.0</td>
+    </tr>
+    <tr>
+      <td>21593</td>
+      <td>2310</td>
+      <td>98146</td>
+      <td>8</td>
+      <td>400000.0</td>
+    </tr>
+    <tr>
+      <td>21594</td>
+      <td>1020</td>
+      <td>98144</td>
+      <td>7</td>
+      <td>402101.0</td>
+    </tr>
+    <tr>
+      <td>21595</td>
+      <td>1600</td>
+      <td>98027</td>
+      <td>8</td>
+      <td>400000.0</td>
+    </tr>
+    <tr>
+      <td>21596</td>
+      <td>1020</td>
+      <td>98144</td>
+      <td>7</td>
+      <td>325000.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>21420 rows × 4 columns</p>
+</div>
+
+
+
+
+```python
+# Get IQR scores
+Q1 = df_outs.quantile(0.25)
+Q3 = df_outs.quantile(0.75)
+IQR = Q3 - Q1
+print(IQR)
+```
+
+    sqft_living      1120.0
+    zipcode            84.0
+    grade               1.0
+    price          320050.0
+    dtype: float64
+
+
+
+```python
+
+# True indicates outliers present
+outliers = (df_outs < (Q1 - 1.5 * IQR)) |(df_outs > (Q3 + 1.5 * IQR))
+
+for col in outliers:
+    print(outliers[col].value_counts(normalize=True))
+```
+
+    False    0.973483
+    True     0.026517
+    Name: sqft_living, dtype: float64
+    False    1.0
+    Name: zipcode, dtype: float64
+    False    0.911811
+    True     0.088189
+    Name: grade, dtype: float64
+    False    0.946218
+    True     0.053782
+    Name: price, dtype: float64
+
+
+> 8% of the values in grade and 5% in price are outliers.
+
+
+```python
+# Remove outliers 
+df_zero_outs = df_outs[~((df_outs < (Q1 - 1.5 * IQR)) |(df_outs > (Q3 + 1.5 * IQR))).any(axis=1)]
+print(df_outs.shape, df_zero_outs.shape)
+```
+
+    (21420, 4) (19032, 4)
+
+
+
+```python
+# number of outliers removed
+df_outs.shape[0] - df_zero_outs.shape[0] # 2388
+```
+
+
+
+
+    2388
+
+
+
+
+```python
+# rerun OLS with outliers removed
+pred5 = ['C(zipcode)', 'C(grade)', 'sqft_living']
+
+# convert to string with + added
+f5 = '+'.join(pred5)
+
+# append target
+f ='price~'+f5 
+
+# Run model and show sumamry
+model = smf.ols(formula=f, data=df_zero_outs).fit()
+model.summary()
+```
+
+
+
+
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.780</td>  
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.780</td>  
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   922.9</td>  
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 07 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
+</tr>
+<tr>
+  <th>Time:</th>                 <td>03:20:25</td>     <th>  Log-Likelihood:    </th> <td>-2.4420e+05</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td> 19032</td>      <th>  AIC:               </th>  <td>4.886e+05</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td> 18958</td>      <th>  BIC:               </th>  <td>4.891e+05</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    73</td>      <th>                     </th>      <td> </td>     
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>     
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+           <td></td>              <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>           <td> 1.231e+04</td> <td> 5543.838</td> <td>    2.221</td> <td> 0.026</td> <td> 1445.035</td> <td> 2.32e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98002]</th> <td> 6351.0940</td> <td> 8273.604</td> <td>    0.768</td> <td> 0.443</td> <td>-9865.908</td> <td> 2.26e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98003]</th> <td> 9032.9996</td> <td> 7434.520</td> <td>    1.215</td> <td> 0.224</td> <td>-5539.322</td> <td> 2.36e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98004]</th> <td> 5.348e+05</td> <td> 8930.554</td> <td>   59.882</td> <td> 0.000</td> <td> 5.17e+05</td> <td> 5.52e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98005]</th> <td> 3.542e+05</td> <td> 9156.645</td> <td>   38.683</td> <td> 0.000</td> <td> 3.36e+05</td> <td> 3.72e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98006]</th> <td> 2.922e+05</td> <td> 6944.783</td> <td>   42.071</td> <td> 0.000</td> <td> 2.79e+05</td> <td> 3.06e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98007]</th> <td> 2.603e+05</td> <td> 9524.305</td> <td>   27.331</td> <td> 0.000</td> <td> 2.42e+05</td> <td> 2.79e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98008]</th> <td> 2.605e+05</td> <td> 7415.963</td> <td>   35.126</td> <td> 0.000</td> <td> 2.46e+05</td> <td> 2.75e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98010]</th> <td> 9.544e+04</td> <td>  1.1e+04</td> <td>    8.650</td> <td> 0.000</td> <td> 7.38e+04</td> <td> 1.17e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98011]</th> <td>  1.45e+05</td> <td> 8267.970</td> <td>   17.543</td> <td> 0.000</td> <td> 1.29e+05</td> <td> 1.61e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98014]</th> <td> 1.229e+05</td> <td> 1.01e+04</td> <td>   12.119</td> <td> 0.000</td> <td> 1.03e+05</td> <td> 1.43e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98019]</th> <td>  1.02e+05</td> <td> 8295.019</td> <td>   12.294</td> <td> 0.000</td> <td> 8.57e+04</td> <td> 1.18e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98022]</th> <td> 4.557e+04</td> <td> 7792.524</td> <td>    5.847</td> <td> 0.000</td> <td> 3.03e+04</td> <td> 6.08e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98023]</th> <td>-1.375e+04</td> <td> 6452.171</td> <td>   -2.130</td> <td> 0.033</td> <td>-2.64e+04</td> <td>-1099.048</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98024]</th> <td> 1.729e+05</td> <td> 1.21e+04</td> <td>   14.280</td> <td> 0.000</td> <td> 1.49e+05</td> <td> 1.97e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98027]</th> <td> 1.937e+05</td> <td> 6992.109</td> <td>   27.702</td> <td> 0.000</td> <td>  1.8e+05</td> <td> 2.07e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98028]</th> <td>  1.37e+05</td> <td> 7340.785</td> <td>   18.667</td> <td> 0.000</td> <td> 1.23e+05</td> <td> 1.51e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98029]</th> <td> 2.216e+05</td> <td> 7283.822</td> <td>   30.428</td> <td> 0.000</td> <td> 2.07e+05</td> <td> 2.36e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98030]</th> <td> 4581.1771</td> <td> 7556.468</td> <td>    0.606</td> <td> 0.544</td> <td>-1.02e+04</td> <td> 1.94e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98031]</th> <td> 1.607e+04</td> <td> 7423.110</td> <td>    2.165</td> <td> 0.030</td> <td> 1519.260</td> <td> 3.06e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98032]</th> <td>-1990.2601</td> <td> 9729.845</td> <td>   -0.205</td> <td> 0.838</td> <td>-2.11e+04</td> <td> 1.71e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98033]</th> <td> 3.304e+05</td> <td> 6905.022</td> <td>   47.845</td> <td> 0.000</td> <td> 3.17e+05</td> <td> 3.44e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98034]</th> <td> 1.871e+05</td> <td> 6333.409</td> <td>   29.544</td> <td> 0.000</td> <td> 1.75e+05</td> <td>    2e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98038]</th> <td> 3.926e+04</td> <td> 6208.414</td> <td>    6.324</td> <td> 0.000</td> <td> 2.71e+04</td> <td> 5.14e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98039]</th> <td> 6.659e+05</td> <td> 4.08e+04</td> <td>   16.315</td> <td> 0.000</td> <td> 5.86e+05</td> <td> 7.46e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98040]</th> <td> 4.608e+05</td> <td> 9085.589</td> <td>   50.714</td> <td> 0.000</td> <td> 4.43e+05</td> <td> 4.79e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98042]</th> <td> 1.535e+04</td> <td> 6287.770</td> <td>    2.442</td> <td> 0.015</td> <td> 3027.646</td> <td> 2.77e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98045]</th> <td> 1.126e+05</td> <td> 8046.330</td> <td>   13.997</td> <td> 0.000</td> <td> 9.69e+04</td> <td> 1.28e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98052]</th> <td>  2.54e+05</td> <td> 6353.557</td> <td>   39.982</td> <td> 0.000</td> <td> 2.42e+05</td> <td> 2.66e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98053]</th> <td> 2.452e+05</td> <td> 6996.748</td> <td>   35.047</td> <td> 0.000</td> <td> 2.32e+05</td> <td> 2.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98055]</th> <td>  4.43e+04</td> <td> 7585.387</td> <td>    5.840</td> <td> 0.000</td> <td> 2.94e+04</td> <td> 5.92e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98056]</th> <td> 1.071e+05</td> <td> 6866.303</td> <td>   15.601</td> <td> 0.000</td> <td> 9.37e+04</td> <td> 1.21e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98058]</th> <td> 4.314e+04</td> <td> 6569.234</td> <td>    6.566</td> <td> 0.000</td> <td> 3.03e+04</td> <td>  5.6e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98059]</th> <td> 9.813e+04</td> <td> 6631.989</td> <td>   14.797</td> <td> 0.000</td> <td> 8.51e+04</td> <td> 1.11e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98065]</th> <td> 1.313e+05</td> <td> 7412.222</td> <td>   17.708</td> <td> 0.000</td> <td> 1.17e+05</td> <td> 1.46e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98070]</th> <td> 1.903e+05</td> <td> 1.01e+04</td> <td>   18.897</td> <td> 0.000</td> <td> 1.71e+05</td> <td>  2.1e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98072]</th> <td> 1.794e+05</td> <td> 7668.242</td> <td>   23.395</td> <td> 0.000</td> <td> 1.64e+05</td> <td> 1.94e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98074]</th> <td> 2.257e+05</td> <td> 7074.476</td> <td>   31.908</td> <td> 0.000</td> <td> 2.12e+05</td> <td>  2.4e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98075]</th> <td>  2.53e+05</td> <td> 8068.718</td> <td>   31.358</td> <td> 0.000</td> <td> 2.37e+05</td> <td> 2.69e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98077]</th> <td> 1.827e+05</td> <td> 9300.869</td> <td>   19.643</td> <td> 0.000</td> <td> 1.64e+05</td> <td> 2.01e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98092]</th> <td>-6800.2479</td> <td> 6963.481</td> <td>   -0.977</td> <td> 0.329</td> <td>-2.04e+04</td> <td> 6848.796</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98102]</th> <td> 4.028e+05</td> <td> 1.09e+04</td> <td>   36.796</td> <td> 0.000</td> <td> 3.81e+05</td> <td> 4.24e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98103]</th> <td> 3.226e+05</td> <td> 6184.861</td> <td>   52.162</td> <td> 0.000</td> <td>  3.1e+05</td> <td> 3.35e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98105]</th> <td> 3.884e+05</td> <td> 8368.956</td> <td>   46.414</td> <td> 0.000</td> <td> 3.72e+05</td> <td> 4.05e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98106]</th> <td> 1.031e+05</td> <td> 7061.032</td> <td>   14.600</td> <td> 0.000</td> <td> 8.93e+04</td> <td> 1.17e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98107]</th> <td> 3.206e+05</td> <td> 7484.857</td> <td>   42.838</td> <td> 0.000</td> <td> 3.06e+05</td> <td> 3.35e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98108]</th> <td> 1.099e+05</td> <td> 8323.530</td> <td>   13.204</td> <td> 0.000</td> <td> 9.36e+04</td> <td> 1.26e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98109]</th> <td> 4.207e+05</td> <td>  1.1e+04</td> <td>   38.106</td> <td> 0.000</td> <td> 3.99e+05</td> <td> 4.42e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98112]</th> <td> 4.282e+05</td> <td> 8666.211</td> <td>   49.413</td> <td> 0.000</td> <td> 4.11e+05</td> <td> 4.45e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98115]</th> <td> 3.253e+05</td> <td> 6250.539</td> <td>   52.044</td> <td> 0.000</td> <td> 3.13e+05</td> <td> 3.38e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98116]</th> <td> 3.072e+05</td> <td> 7126.957</td> <td>   43.109</td> <td> 0.000</td> <td> 2.93e+05</td> <td> 3.21e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98117]</th> <td> 3.169e+05</td> <td> 6310.895</td> <td>   50.214</td> <td> 0.000</td> <td> 3.05e+05</td> <td> 3.29e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98118]</th> <td> 1.642e+05</td> <td> 6424.024</td> <td>   25.566</td> <td> 0.000</td> <td> 1.52e+05</td> <td> 1.77e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98119]</th> <td> 4.135e+05</td> <td> 8887.517</td> <td>   46.531</td> <td> 0.000</td> <td> 3.96e+05</td> <td> 4.31e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98122]</th> <td> 3.089e+05</td> <td> 7411.970</td> <td>   41.677</td> <td> 0.000</td> <td> 2.94e+05</td> <td> 3.23e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98125]</th> <td> 1.961e+05</td> <td> 6716.675</td> <td>   29.190</td> <td> 0.000</td> <td> 1.83e+05</td> <td> 2.09e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98126]</th> <td> 1.959e+05</td> <td> 6918.765</td> <td>   28.310</td> <td> 0.000</td> <td> 1.82e+05</td> <td> 2.09e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98133]</th> <td> 1.529e+05</td> <td> 6401.448</td> <td>   23.892</td> <td> 0.000</td> <td>  1.4e+05</td> <td> 1.65e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98136]</th> <td> 2.678e+05</td> <td> 7554.486</td> <td>   35.446</td> <td> 0.000</td> <td> 2.53e+05</td> <td> 2.83e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98144]</th> <td> 2.428e+05</td> <td> 7099.297</td> <td>   34.199</td> <td> 0.000</td> <td> 2.29e+05</td> <td> 2.57e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98146]</th> <td> 1.183e+05</td> <td> 7454.125</td> <td>   15.874</td> <td> 0.000</td> <td> 1.04e+05</td> <td> 1.33e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98148]</th> <td>  5.19e+04</td> <td> 1.32e+04</td> <td>    3.944</td> <td> 0.000</td> <td> 2.61e+04</td> <td> 7.77e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98155]</th> <td> 1.457e+05</td> <td> 6553.932</td> <td>   22.235</td> <td> 0.000</td> <td> 1.33e+05</td> <td> 1.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98166]</th> <td> 1.281e+05</td> <td> 7736.756</td> <td>   16.557</td> <td> 0.000</td> <td> 1.13e+05</td> <td> 1.43e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98168]</th> <td> 3.781e+04</td> <td> 7578.553</td> <td>    4.989</td> <td> 0.000</td> <td>  2.3e+04</td> <td> 5.27e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98177]</th> <td> 2.388e+05</td> <td> 7810.730</td> <td>   30.573</td> <td> 0.000</td> <td> 2.23e+05</td> <td> 2.54e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98178]</th> <td> 6.369e+04</td> <td> 7531.210</td> <td>    8.457</td> <td> 0.000</td> <td> 4.89e+04</td> <td> 7.85e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98188]</th> <td> 3.219e+04</td> <td> 9382.838</td> <td>    3.430</td> <td> 0.001</td> <td> 1.38e+04</td> <td> 5.06e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98198]</th> <td> 4.488e+04</td> <td> 7407.290</td> <td>    6.058</td> <td> 0.000</td> <td> 3.04e+04</td> <td> 5.94e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98199]</th> <td>  3.68e+05</td> <td> 7470.601</td> <td>   49.262</td> <td> 0.000</td> <td> 3.53e+05</td> <td> 3.83e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.7]</th>       <td> 1.631e+04</td> <td> 2411.464</td> <td>    6.762</td> <td> 0.000</td> <td> 1.16e+04</td> <td>  2.1e+04</td>
+</tr>
+<tr>
+  <th>C(grade)[T.8]</th>       <td>  5.37e+04</td> <td> 2785.058</td> <td>   19.283</td> <td> 0.000</td> <td> 4.82e+04</td> <td> 5.92e+04</td>
+</tr>
+<tr>
+  <th>C(grade)[T.9]</th>       <td> 1.282e+05</td> <td> 3572.600</td> <td>   35.873</td> <td> 0.000</td> <td> 1.21e+05</td> <td> 1.35e+05</td>
+</tr>
+<tr>
+  <th>sqft_living</th>         <td>  123.6130</td> <td>    1.292</td> <td>   95.690</td> <td> 0.000</td> <td>  121.081</td> <td>  126.145</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>2928.305</td> <th>  Durbin-Watson:     </th> <td>   1.988</td> 
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td>10189.665</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 0.766</td>  <th>  Prob(JB):          </th> <td>    0.00</td> 
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td> 6.241</td>  <th>  Cond. No.          </th> <td>1.34e+05</td> 
+</tr>
+</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.34e+05. This might indicate that there are<br/>strong multicollinearity or other numerical problems.
+
+
+
+
+```python
+reg_mods['model5'] = {'vars': f5, 'r2':0.780, 's':0.766, 'k':6.241}
+reg_mods
+```
+
+
+
+
+    {'model1': {'vars': 'grade+sqft_living+bathrooms',
+      'r2': 0.536,
+      's': 3.293,
+      'k': 35.828},
+     'model2': {'vars': 'C(zipcode)+grade+sqft_living+sqft_living15+condition_2+condition_3+condition_4+condition_5',
+      'r2': 0.75,
+      's': 5.17,
+      'k': 75.467},
+     'model3': {'vars': 'C(zipcode)+grade+sqft_living',
+      'r2': 0.744,
+      's': 4.927,
+      'k': 69.417},
+     'model4': {'vars': 'C(zipcode)+C(grade)+sqft_living',
+      'r2': 0.783,
+      's': 4.032,
+      'k': 55.222},
+     'model5': {'vars': 'C(zipcode)+C(grade)+sqft_living',
+      'r2': 0.78,
+      's': 0.766,
+      'k': 6.241}}
+
+
+
+> Removing outliers drastically improved the skew and kurtosis values while maintaining R-squared at 0.78. However, this was at the cost of losing the majority of the grade score levels, leaving us with only 7,8,9 in the model. 
+
+> We could use this to recommend aiming for a minimum grade score between 7 and 9. 
+
+
+```python
+# check QQ Plot for Model5
+residuals = model.resid
+fig = sm.graphics.qqplot(residuals, dist=stats.norm, line='45', fit=True)
+fig.show()
+```
+
+
+![png](output_234_0.png)
+
+
+> Not perfect, but definitely a significant improvement over Model 4.
+
+## Model 6 (FINAL)
+
+### Robust Scaler
+
+Considering sqft_living values are in the 1000's while grade is 1 to 13, the model could most likely be improved further by scaling the square-footages down to a magnitude that aligns more closely with the other variables.
 
 
 ```python
 # ADDING OUTLIER REMOVAL FROM preprocessing.RobuseScaler
+# good to use when you have outliers bc uses median 
 from sklearn.preprocessing import RobustScaler
 
 robscaler = RobustScaler()
@@ -4808,420 +6651,709 @@ robscaler
 
 
 ```python
-RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
-             with_scaling=True)
+scale_vars = ['sqft_living']
+```
+
+
+```python
+for col in scale_vars:
+    col_data = df[col].values
+    res = robscaler.fit_transform(col_data.reshape(-1,1)) # don't scale target
+    df['sca_'+col] = res.flatten()
+```
+
+
+```python
+df.describe().round(3)
 ```
 
 
 
 
-    RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
-                 with_scaling=True)
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>price</th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft_living</th>
+      <th>sqft_lot</th>
+      <th>floors</th>
+      <th>condition</th>
+      <th>grade</th>
+      <th>sqft_above</th>
+      <th>sqft_basement</th>
+      <th>zipcode</th>
+      <th>lat</th>
+      <th>long</th>
+      <th>sqft_living15</th>
+      <th>sqft_lot15</th>
+      <th>sca_sqft_living</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>count</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+      <td>21420.000</td>
+    </tr>
+    <tr>
+      <td>mean</td>
+      <td>541861.428</td>
+      <td>3.374</td>
+      <td>2.118</td>
+      <td>2083.133</td>
+      <td>15128.038</td>
+      <td>1.496</td>
+      <td>3.411</td>
+      <td>7.663</td>
+      <td>1791.170</td>
+      <td>285.937</td>
+      <td>98077.874</td>
+      <td>47.560</td>
+      <td>-122.214</td>
+      <td>1988.384</td>
+      <td>12775.718</td>
+      <td>0.146</td>
+    </tr>
+    <tr>
+      <td>std</td>
+      <td>367556.938</td>
+      <td>0.925</td>
+      <td>0.769</td>
+      <td>918.808</td>
+      <td>41530.797</td>
+      <td>0.540</td>
+      <td>0.650</td>
+      <td>1.172</td>
+      <td>828.693</td>
+      <td>440.013</td>
+      <td>53.477</td>
+      <td>0.139</td>
+      <td>0.141</td>
+      <td>685.537</td>
+      <td>27345.622</td>
+      <td>0.820</td>
+    </tr>
+    <tr>
+      <td>min</td>
+      <td>78000.000</td>
+      <td>1.000</td>
+      <td>0.500</td>
+      <td>370.000</td>
+      <td>520.000</td>
+      <td>1.000</td>
+      <td>1.000</td>
+      <td>3.000</td>
+      <td>370.000</td>
+      <td>0.000</td>
+      <td>98001.000</td>
+      <td>47.156</td>
+      <td>-122.519</td>
+      <td>399.000</td>
+      <td>651.000</td>
+      <td>-1.384</td>
+    </tr>
+    <tr>
+      <td>25%</td>
+      <td>324950.000</td>
+      <td>3.000</td>
+      <td>1.750</td>
+      <td>1430.000</td>
+      <td>5040.000</td>
+      <td>1.000</td>
+      <td>3.000</td>
+      <td>7.000</td>
+      <td>1200.000</td>
+      <td>0.000</td>
+      <td>98033.000</td>
+      <td>47.471</td>
+      <td>-122.328</td>
+      <td>1490.000</td>
+      <td>5100.000</td>
+      <td>-0.438</td>
+    </tr>
+    <tr>
+      <td>50%</td>
+      <td>450550.000</td>
+      <td>3.000</td>
+      <td>2.250</td>
+      <td>1920.000</td>
+      <td>7614.000</td>
+      <td>1.500</td>
+      <td>3.000</td>
+      <td>7.000</td>
+      <td>1560.000</td>
+      <td>0.000</td>
+      <td>98065.000</td>
+      <td>47.572</td>
+      <td>-122.230</td>
+      <td>1840.000</td>
+      <td>7620.000</td>
+      <td>0.000</td>
+    </tr>
+    <tr>
+      <td>75%</td>
+      <td>645000.000</td>
+      <td>4.000</td>
+      <td>2.500</td>
+      <td>2550.000</td>
+      <td>10690.500</td>
+      <td>2.000</td>
+      <td>4.000</td>
+      <td>8.000</td>
+      <td>2220.000</td>
+      <td>550.000</td>
+      <td>98117.000</td>
+      <td>47.678</td>
+      <td>-122.125</td>
+      <td>2370.000</td>
+      <td>10086.250</td>
+      <td>0.562</td>
+    </tr>
+    <tr>
+      <td>max</td>
+      <td>7700000.000</td>
+      <td>33.000</td>
+      <td>8.000</td>
+      <td>13540.000</td>
+      <td>1651359.000</td>
+      <td>3.500</td>
+      <td>5.000</td>
+      <td>13.000</td>
+      <td>9410.000</td>
+      <td>4820.000</td>
+      <td>98199.000</td>
+      <td>47.778</td>
+      <td>-121.315</td>
+      <td>6210.000</td>
+      <td>871200.000</td>
+      <td>10.375</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 
 
 
 ```python
-scaled_vars = ['sqft_living','sqft_lot','sqft_living15','sqft_lot15','bedrooms','bathrooms']
-df_scaled = df[scaled_vars]
+# plot histogram to check normality
+df['sca_sqft_living'].hist(figsize=(6,6))
 ```
 
 
-```python
-for col in scaled_vars:
 
-    col_data = np.array(np.array(df_scaled[col]))
-    res = robscaler.fit_transform(col_data.reshape(-1,1)) #,df['price'])
-    df_scaled['sca_'+col] = res.flatten()
-```
 
-### One-Hot Encoding
+    <matplotlib.axes._subplots.AxesSubplot at 0x1c248b3ac8>
 
+
+
+
+![png](output_242_1.png)
 
 
 
 ```python
-# get_dummies for one-hot encoding
-yb_dummies = pd.get_dummies(df['yb_cat'], prefix='yb', drop_first=True)
-df = pd.concat([df, yb_dummies], axis=1)
-df.head(2)
-
-
-# get_dummies for one-hot encoding
-zip_dummies = pd.get_dummies(df['zip_cat'], prefix='zip', drop_first=True)
-# drop first dummy to avoid multicollinearity trap
-df = pd.concat([df, zip_dummies], axis=1)
-# inspect
-df.head()
-```
-
-### Log Transformation
-
-Reduces skewness and variability of data to improve regression algorithm.
-
-
-```python
-# Log Transform
-
-#x = np.linspace(start=-100, stop=100, num=10**3)
-#y = np.log(x)
-#plt.plot(x,y)
-
-# Make data more normal (improve skewness)
-
-#data_log = pd.DataFrame([])
-#data_log['log_sqftliv'] = np.log(df_pred['sqft_living'])
-#data_log['log_bathrooms'] = np.log(df_pred['bathrooms'])
-#data_log['log_grade'] = np.log(df_pred['grade'])
-```
-
-### MinMax Scaling
-
-Reduces skewness and variability of data to improve regression algorithm.
-
-
-```python
-# create empty dataframe for scaled features
-data_cont_scaled = pd.DataFrame([])
-
-# minmax scaling on sqft_living:
-sqftliv = df_pred['sqft_living']
-scaled_sqftliv = (sqftliv - min(sqftliv)) / (max(sqftliv) - min(sqftliv))
-data_cont_scaled['sqftliv'] = scaled_sqftliv
-```
-
-
-```python
-# This did nothing...let's try standardization
-#minmax scaling on grade
-
-#grade = df_pred['grade']
-#scaled_grade = (grade - min(grade)) / (max(grade) - min(grade))
-#data_cont_scaled['grade'] = scaled_grade
-
-# minmax scaling on bathrooms
-#bathrooms = df_pred['bathrooms']
-#scaled_bathrooms = (bathrooms - min(bathrooms)) / (max(bathrooms) - min(bathrooms))
-#data_cont_scaled['bathrooms'] = scaled_bathrooms
-
-# This did nothing... let's try mean normalization
-
-#log_grade = data_log['log_grade']
-#scaled_grade = (log_grade - np.mean(log_grade)) / np.sqrt(np.var(log_grade))
-#data_cont_scaled['grade'] = scaled_grade
-
-
-#log_bathrooms = data_log['log_bathrooms']
-#scaled_bathrooms = (log_bathrooms - np.mean(log_bathrooms)) / np.sqrt(np.var(log_bathrooms))
-#data_cont_scaled['bathrooms'] = scaled_bathrooms
-
-
-# This did nothing...probably because they're categorical?
-# mean normalization
-#log_grade = data_log['log_grade']
-#scaled_grade = (log_grade - np.mean(log_grade)) / (max(log_grade) - min(log_grade))
-#data_cont_scaled['grade'] = scaled_grade
-
-#log_bathrooms = data_log['log_bathrooms']
-#scaled_bathrooms = (log_bathrooms - np.mean(log_bathrooms)) / (max(log_bathrooms) - min(log_bathrooms))
-#data_cont_scaled['bathrooms'] = scaled_bathrooms
-
-```
-
-
-```python
-df_pred['zip'] = df_drops['zipcode']
-df_pred['bath'] = df_drops['bathrooms']
-df_pred['grade'] = df_drops['grade']
-df_pred['zip'] = df_pred['zip'].astype('category')
-df_pred['bath'] = df_pred['bath'].astype('category')
-df_pred['grade'] = df_pred['grade'].astype('category')
-```
-
-
-```python
-data_cont_scaled.hist(figsize=(6,6))
+df_zero_outs['sca_sqft_living'] = df['sca_sqft_living'].copy()
+df_zero_outs
 ```
 
 
 
 
-    array([[<matplotlib.axes._subplots.AxesSubplot object at 0x1c2b35c978>]],
-          dtype=object)
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
 
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>sqft_living</th>
+      <th>zipcode</th>
+      <th>grade</th>
+      <th>price</th>
+      <th>sca_sqft_living</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>1180</td>
+      <td>98178</td>
+      <td>7</td>
+      <td>221900.0</td>
+      <td>-0.660714</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2570</td>
+      <td>98125</td>
+      <td>7</td>
+      <td>538000.0</td>
+      <td>0.580357</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>770</td>
+      <td>98028</td>
+      <td>6</td>
+      <td>180000.0</td>
+      <td>-1.026786</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>1960</td>
+      <td>98136</td>
+      <td>7</td>
+      <td>604000.0</td>
+      <td>0.035714</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>1680</td>
+      <td>98074</td>
+      <td>8</td>
+      <td>510000.0</td>
+      <td>-0.214286</td>
+    </tr>
+    <tr>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <td>21592</td>
+      <td>1530</td>
+      <td>98103</td>
+      <td>8</td>
+      <td>360000.0</td>
+      <td>-0.348214</td>
+    </tr>
+    <tr>
+      <td>21593</td>
+      <td>2310</td>
+      <td>98146</td>
+      <td>8</td>
+      <td>400000.0</td>
+      <td>0.348214</td>
+    </tr>
+    <tr>
+      <td>21594</td>
+      <td>1020</td>
+      <td>98144</td>
+      <td>7</td>
+      <td>402101.0</td>
+      <td>-0.803571</td>
+    </tr>
+    <tr>
+      <td>21595</td>
+      <td>1600</td>
+      <td>98027</td>
+      <td>8</td>
+      <td>400000.0</td>
+      <td>-0.285714</td>
+    </tr>
+    <tr>
+      <td>21596</td>
+      <td>1020</td>
+      <td>98144</td>
+      <td>7</td>
+      <td>325000.0</td>
+      <td>-0.803571</td>
+    </tr>
+  </tbody>
+</table>
+<p>19032 rows × 5 columns</p>
+</div>
 
-
-![png](output/output_218_1.png)
 
 
 
 ```python
-# NOPE this just created a bunch of NaNs for grade and bathroom
+# rerun OLS with outliers removed
+pred6 = ['C(zipcode)', 'C(grade)', 'sca_sqft_living']
 
-# create a new dataframe and add dummy_vars
-data_fin = pd.DataFrame([])
-data_fin['sqftliv'] = scaled_sqftliv
-#grade_dummies = pd.get_dummies(df_pred['grade'], prefix='grade')
-#bathroom_dummies = pd.get_dummies(df_pred['bathrooms'], prefix='bath')
-#zip_dummies = pd.get_dummies(df_pred['zip'], prefix='zip')
-data_fin['grade'] = scaled_grade
-data_fin['bath'] = scaled_bathrooms
-price = df_pred['price']
-data_fin = pd.concat([price, data_fin], axis=1)
-data_fin
+# convert to string with + added
+f6 = '+'.join(pred6)
 
-```
+# append target
+f ='price~'+f6 
 
-
-```python
-# Run OLS on data using formula y~X where w n predictors X is x, + x1 + ... xn
-import statsmodels.api as sm
-from statsmodels.formula.api import ols
-outcome = 'price'
-predictors = data_fin.drop('price', axis=1)
-pred_sum = '+'.join(predictors.columns)
-formula = outcome + '~' + pred_sum
-model = ols(formula=formula, data=data_fin).fit()
-model.summary()
-```
-
-## Stepwise Selection
-Start with empty model, find lowest p-value and perform a forward-backward feature selection based on pvalue
-
-
-```python
-
-```
-
-## Forward Selection
-
-
-```python
-# Choose a linear model by forward selection
-# The function below optimizes adjusted R-squared by adding features that help the most one at a time
-# until the score goes down or you run out of features.
-
-import statsmodels.formula.api as smf
-
-def forward_selected(data, response):
-    """Linear model designed by forward selection.
-
-    Parameters:
-    -----------
-    data : pandas DataFrame with all possible predictors and response
-
-    response: string, name of response column in data
-
-    Returns:
-    --------
-    model: an "optimal" fitted statsmodels linear model
-           with an intercept
-           selected by forward selection
-           evaluated by adjusted R-squared
-    """
-    remaining = set(data.columns)
-    remaining.remove(response)
-    selected = []
-    current_score, best_new_score = 0.0, 0.0
-    while remaining and current_score == best_new_score:
-        scores_with_candidates = []
-        for candidate in remaining:
-            formula = "{} ~ {} + 1".format(response,
-                                           ' + '.join(selected + [candidate]))
-            score = smf.ols(formula, data).fit().rsquared_adj
-            scores_with_candidates.append((score, candidate))
-        scores_with_candidates.sort()
-        best_new_score, best_candidate = scores_with_candidates.pop()
-        if current_score < best_new_score:
-            remaining.remove(best_candidate)
-            selected.append(best_candidate)
-            current_score = best_new_score
-    formula = "{} ~ {} + 1".format(response,
-                                   ' + '.join(selected))
-    model = smf.ols(formula, data).fit()
-    return model
-```
-
-
-```python
-model = forward_selected(df_pred, 'price')
-print(model.model.formula)
-print(model.rsquared_adj)
-```
-
-    price ~ sqft_living + grade + zip_3 + zip_4 + bedrooms + sqft_living15 + zip_2 + bathrooms + 1
-    0.5629928750344877
-
-
-
-```python
-model = forward_selected(df_pred, 'price')
-print(model.model.formula)
-print(model.rsquared_adj)
-```
-
-    price ~ sqft_living + grade + zip_3 + zip_4 + bedrooms + sqft_living15 + zip_2 + bathrooms + 1
-    0.5629928750344877
-
-
-Explaining/Phrasing R-Squared values
-An obtained R-squared value of say 0.85 can be put into a statement as
-
-85% of the variations in dependent variable  𝑦  are explained by the independent variable in our model.
-
-
-```python
-# Alternative method
-
-from sklearn.feature_selection import RFE
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import MinMaxScaler
-
-import sklearn.metrics as metrics
-
-
-
-# Define selector function combining RFE and linear regression
-linreg = LinearRegression()
-selector = RFE(linreg, n_features_to_select=1)
-
-# Drop already scaled variables for this feature testing
-X = df_run.loc[:,~(df_run.columns.str.startswith(('bins','zip')))]
-X = X.drop('price',axis=1)
-
-# RUNNING RFE ON THE UNSCALED DATA(DEMONSTRATION)
-Y = df_run['price']
-# Y = df_run['logz_price']
-# X = df_run.drop(['price'],axis=1)
-
-
-# Run regressions on X,Y
-selector = selector.fit(X,Y)
-
-# Saving unscaled rankings for demo purposes
-no_scale = selector.ranking_
-
-
-
-
-# Scale all variables to value between 0-1 to use RFE to determine which features are the most important for determining price?
-from sklearn.preprocessing import MinMaxScaler
-scaler = MinMaxScaler()
-
-# Scale the data before running RFE
-
-# dummy vars zip?
-
-
-# ONLY SCALE NON-CATEGORICAL, ONE-HOT CATEGORICAL
-scaler.fit(X,Y)
-scaled_data = scaler.transform(X)
-scaled_data.shape
-```
-
-
-```python
-# Running RFE with scaled data
-selector = selector.fit(scaled_data, Y)
-scaled = selector.ranking_
-type(scaled)
-
-
-# Create a dataframe with the ranked values of each feature for both scaled and unscaled data
-best_features = pd.DataFrame({'columns':X.columns, 'scaled_rank' : scaled,'unscaled_rank':no_scale})
-best_features.set_index('columns',inplace=True)
-
-
-# Display dataframe (sorted based on unscaled rank)
-best_features.sort_values('unscaled_rank')
-```
-
-
-```python
-# Concatenate X,Y for OLS
-df_run_ols = pd.concat([Y,X],axis=1)
-
-# Import packages
-import statsmodels.api as sm
-import statsmodels.stats.api as sms
-import statsmodels.formula.api as smf
-import scipy.stats as stats
-
-# Enter equation for selected predictors: (use C to run as categorical)
-# f1 = 'price~C(codezipcode)+C(grade)+sca_sqft_living+sca_sqft_living15' # 0.8 r1 Adjusted
-f1 = 'price~C(codezipcode)+grade+sca_sqft_living+sca_sqft_living15'
-
-# Run model and report sumamry
-model = smf.ols(formula=f1, data=df_run_ols).fit()
-model.summary()
-```
-
-# FINAL MODEL
-
-## OLS Multivariate Regression
-
-DETERMINING IDEAL FEATURES TO USE
-Use MinMaxScaler to get on same scale
-Use RFE to find the best features
-
-
-```python
-# Define selector function combining RFE and linear regression
-linreg = LinearRegression()
-selector = RFE(linreg, n_features_to_select=1)
-
-# Drop already scaled variables for this feature testing
-X =df_run.loc[:,~(df_run.columns.str.startswith(('bins','zip')))]
-X = X.drop('price',axis=1)
-
-# RUNNING RFE ON THE UNSCALED DATA(DEMONSTRATION)
-Y = df_run['price']
-```
-
-
-```python
-cat_cols = ['bedrooms','bathrooms']
-
-from sklearn.preprocessing import LabelEncoder
-encoder = LabelEncoder()
-new_df = pd.DataFrame()
-
-for col in cat_cols:
-    new_df[col] = encoder.fit_transform(df[col])
-new_df.head()
-```
-
-
-```python
-# Comcatenate X,Y for OLS
-df_run_ols = pd.concat([Y,X],axis=1)
-
-# Import packages
-import statsmodels.api as sm
-import statsmodels.stats.api as sms
-import statsmodels.formula.api as smf
-import scipy.stats as stats
-
-# Enter equation for selected predictors: (use C to run as categorical)
-# f1 = 'price~C(codezipcode)+C(grade)+sca_sqft_living+sca_sqft_living15' # 0.8 r1 Adjusted
-f1 = 'price~C(codezipcode)+grade+sca_sqft_living+sca_sqft_living15'
-
-# Run model and report sumamry
-model = smf.ols(formula=f1, data=df_run_ols).fit()
+# Run model and show sumamry
+model = smf.ols(formula=f, data=df_zero_outs).fit()
 model.summary()
 ```
 
 
+
+
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.780</td>  
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.780</td>  
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   922.9</td>  
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 07 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
+</tr>
+<tr>
+  <th>Time:</th>                 <td>04:13:01</td>     <th>  Log-Likelihood:    </th> <td>-2.4420e+05</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td> 19032</td>      <th>  AIC:               </th>  <td>4.886e+05</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td> 18958</td>      <th>  BIC:               </th>  <td>4.891e+05</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    73</td>      <th>                     </th>      <td> </td>     
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>     
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+           <td></td>              <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>           <td> 2.496e+05</td> <td> 5371.330</td> <td>   46.478</td> <td> 0.000</td> <td> 2.39e+05</td> <td>  2.6e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98002]</th> <td> 6351.0940</td> <td> 8273.604</td> <td>    0.768</td> <td> 0.443</td> <td>-9865.908</td> <td> 2.26e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98003]</th> <td> 9032.9996</td> <td> 7434.520</td> <td>    1.215</td> <td> 0.224</td> <td>-5539.322</td> <td> 2.36e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98004]</th> <td> 5.348e+05</td> <td> 8930.554</td> <td>   59.882</td> <td> 0.000</td> <td> 5.17e+05</td> <td> 5.52e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98005]</th> <td> 3.542e+05</td> <td> 9156.645</td> <td>   38.683</td> <td> 0.000</td> <td> 3.36e+05</td> <td> 3.72e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98006]</th> <td> 2.922e+05</td> <td> 6944.783</td> <td>   42.071</td> <td> 0.000</td> <td> 2.79e+05</td> <td> 3.06e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98007]</th> <td> 2.603e+05</td> <td> 9524.305</td> <td>   27.331</td> <td> 0.000</td> <td> 2.42e+05</td> <td> 2.79e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98008]</th> <td> 2.605e+05</td> <td> 7415.963</td> <td>   35.126</td> <td> 0.000</td> <td> 2.46e+05</td> <td> 2.75e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98010]</th> <td> 9.544e+04</td> <td>  1.1e+04</td> <td>    8.650</td> <td> 0.000</td> <td> 7.38e+04</td> <td> 1.17e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98011]</th> <td>  1.45e+05</td> <td> 8267.970</td> <td>   17.543</td> <td> 0.000</td> <td> 1.29e+05</td> <td> 1.61e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98014]</th> <td> 1.229e+05</td> <td> 1.01e+04</td> <td>   12.119</td> <td> 0.000</td> <td> 1.03e+05</td> <td> 1.43e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98019]</th> <td>  1.02e+05</td> <td> 8295.019</td> <td>   12.294</td> <td> 0.000</td> <td> 8.57e+04</td> <td> 1.18e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98022]</th> <td> 4.557e+04</td> <td> 7792.524</td> <td>    5.847</td> <td> 0.000</td> <td> 3.03e+04</td> <td> 6.08e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98023]</th> <td>-1.375e+04</td> <td> 6452.171</td> <td>   -2.130</td> <td> 0.033</td> <td>-2.64e+04</td> <td>-1099.048</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98024]</th> <td> 1.729e+05</td> <td> 1.21e+04</td> <td>   14.280</td> <td> 0.000</td> <td> 1.49e+05</td> <td> 1.97e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98027]</th> <td> 1.937e+05</td> <td> 6992.109</td> <td>   27.702</td> <td> 0.000</td> <td>  1.8e+05</td> <td> 2.07e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98028]</th> <td>  1.37e+05</td> <td> 7340.785</td> <td>   18.667</td> <td> 0.000</td> <td> 1.23e+05</td> <td> 1.51e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98029]</th> <td> 2.216e+05</td> <td> 7283.822</td> <td>   30.428</td> <td> 0.000</td> <td> 2.07e+05</td> <td> 2.36e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98030]</th> <td> 4581.1771</td> <td> 7556.468</td> <td>    0.606</td> <td> 0.544</td> <td>-1.02e+04</td> <td> 1.94e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98031]</th> <td> 1.607e+04</td> <td> 7423.110</td> <td>    2.165</td> <td> 0.030</td> <td> 1519.260</td> <td> 3.06e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98032]</th> <td>-1990.2601</td> <td> 9729.845</td> <td>   -0.205</td> <td> 0.838</td> <td>-2.11e+04</td> <td> 1.71e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98033]</th> <td> 3.304e+05</td> <td> 6905.022</td> <td>   47.845</td> <td> 0.000</td> <td> 3.17e+05</td> <td> 3.44e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98034]</th> <td> 1.871e+05</td> <td> 6333.409</td> <td>   29.544</td> <td> 0.000</td> <td> 1.75e+05</td> <td>    2e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98038]</th> <td> 3.926e+04</td> <td> 6208.414</td> <td>    6.324</td> <td> 0.000</td> <td> 2.71e+04</td> <td> 5.14e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98039]</th> <td> 6.659e+05</td> <td> 4.08e+04</td> <td>   16.315</td> <td> 0.000</td> <td> 5.86e+05</td> <td> 7.46e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98040]</th> <td> 4.608e+05</td> <td> 9085.589</td> <td>   50.714</td> <td> 0.000</td> <td> 4.43e+05</td> <td> 4.79e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98042]</th> <td> 1.535e+04</td> <td> 6287.770</td> <td>    2.442</td> <td> 0.015</td> <td> 3027.646</td> <td> 2.77e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98045]</th> <td> 1.126e+05</td> <td> 8046.330</td> <td>   13.997</td> <td> 0.000</td> <td> 9.69e+04</td> <td> 1.28e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98052]</th> <td>  2.54e+05</td> <td> 6353.557</td> <td>   39.982</td> <td> 0.000</td> <td> 2.42e+05</td> <td> 2.66e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98053]</th> <td> 2.452e+05</td> <td> 6996.748</td> <td>   35.047</td> <td> 0.000</td> <td> 2.32e+05</td> <td> 2.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98055]</th> <td>  4.43e+04</td> <td> 7585.387</td> <td>    5.840</td> <td> 0.000</td> <td> 2.94e+04</td> <td> 5.92e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98056]</th> <td> 1.071e+05</td> <td> 6866.303</td> <td>   15.601</td> <td> 0.000</td> <td> 9.37e+04</td> <td> 1.21e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98058]</th> <td> 4.314e+04</td> <td> 6569.234</td> <td>    6.566</td> <td> 0.000</td> <td> 3.03e+04</td> <td>  5.6e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98059]</th> <td> 9.813e+04</td> <td> 6631.989</td> <td>   14.797</td> <td> 0.000</td> <td> 8.51e+04</td> <td> 1.11e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98065]</th> <td> 1.313e+05</td> <td> 7412.222</td> <td>   17.708</td> <td> 0.000</td> <td> 1.17e+05</td> <td> 1.46e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98070]</th> <td> 1.903e+05</td> <td> 1.01e+04</td> <td>   18.897</td> <td> 0.000</td> <td> 1.71e+05</td> <td>  2.1e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98072]</th> <td> 1.794e+05</td> <td> 7668.242</td> <td>   23.395</td> <td> 0.000</td> <td> 1.64e+05</td> <td> 1.94e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98074]</th> <td> 2.257e+05</td> <td> 7074.476</td> <td>   31.908</td> <td> 0.000</td> <td> 2.12e+05</td> <td>  2.4e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98075]</th> <td>  2.53e+05</td> <td> 8068.718</td> <td>   31.358</td> <td> 0.000</td> <td> 2.37e+05</td> <td> 2.69e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98077]</th> <td> 1.827e+05</td> <td> 9300.869</td> <td>   19.643</td> <td> 0.000</td> <td> 1.64e+05</td> <td> 2.01e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98092]</th> <td>-6800.2479</td> <td> 6963.481</td> <td>   -0.977</td> <td> 0.329</td> <td>-2.04e+04</td> <td> 6848.796</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98102]</th> <td> 4.028e+05</td> <td> 1.09e+04</td> <td>   36.796</td> <td> 0.000</td> <td> 3.81e+05</td> <td> 4.24e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98103]</th> <td> 3.226e+05</td> <td> 6184.861</td> <td>   52.162</td> <td> 0.000</td> <td>  3.1e+05</td> <td> 3.35e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98105]</th> <td> 3.884e+05</td> <td> 8368.956</td> <td>   46.414</td> <td> 0.000</td> <td> 3.72e+05</td> <td> 4.05e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98106]</th> <td> 1.031e+05</td> <td> 7061.032</td> <td>   14.600</td> <td> 0.000</td> <td> 8.93e+04</td> <td> 1.17e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98107]</th> <td> 3.206e+05</td> <td> 7484.857</td> <td>   42.838</td> <td> 0.000</td> <td> 3.06e+05</td> <td> 3.35e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98108]</th> <td> 1.099e+05</td> <td> 8323.530</td> <td>   13.204</td> <td> 0.000</td> <td> 9.36e+04</td> <td> 1.26e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98109]</th> <td> 4.207e+05</td> <td>  1.1e+04</td> <td>   38.106</td> <td> 0.000</td> <td> 3.99e+05</td> <td> 4.42e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98112]</th> <td> 4.282e+05</td> <td> 8666.211</td> <td>   49.413</td> <td> 0.000</td> <td> 4.11e+05</td> <td> 4.45e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98115]</th> <td> 3.253e+05</td> <td> 6250.539</td> <td>   52.044</td> <td> 0.000</td> <td> 3.13e+05</td> <td> 3.38e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98116]</th> <td> 3.072e+05</td> <td> 7126.957</td> <td>   43.109</td> <td> 0.000</td> <td> 2.93e+05</td> <td> 3.21e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98117]</th> <td> 3.169e+05</td> <td> 6310.895</td> <td>   50.214</td> <td> 0.000</td> <td> 3.05e+05</td> <td> 3.29e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98118]</th> <td> 1.642e+05</td> <td> 6424.024</td> <td>   25.566</td> <td> 0.000</td> <td> 1.52e+05</td> <td> 1.77e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98119]</th> <td> 4.135e+05</td> <td> 8887.517</td> <td>   46.531</td> <td> 0.000</td> <td> 3.96e+05</td> <td> 4.31e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98122]</th> <td> 3.089e+05</td> <td> 7411.970</td> <td>   41.677</td> <td> 0.000</td> <td> 2.94e+05</td> <td> 3.23e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98125]</th> <td> 1.961e+05</td> <td> 6716.675</td> <td>   29.190</td> <td> 0.000</td> <td> 1.83e+05</td> <td> 2.09e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98126]</th> <td> 1.959e+05</td> <td> 6918.765</td> <td>   28.310</td> <td> 0.000</td> <td> 1.82e+05</td> <td> 2.09e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98133]</th> <td> 1.529e+05</td> <td> 6401.448</td> <td>   23.892</td> <td> 0.000</td> <td>  1.4e+05</td> <td> 1.65e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98136]</th> <td> 2.678e+05</td> <td> 7554.486</td> <td>   35.446</td> <td> 0.000</td> <td> 2.53e+05</td> <td> 2.83e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98144]</th> <td> 2.428e+05</td> <td> 7099.297</td> <td>   34.199</td> <td> 0.000</td> <td> 2.29e+05</td> <td> 2.57e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98146]</th> <td> 1.183e+05</td> <td> 7454.125</td> <td>   15.874</td> <td> 0.000</td> <td> 1.04e+05</td> <td> 1.33e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98148]</th> <td>  5.19e+04</td> <td> 1.32e+04</td> <td>    3.944</td> <td> 0.000</td> <td> 2.61e+04</td> <td> 7.77e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98155]</th> <td> 1.457e+05</td> <td> 6553.932</td> <td>   22.235</td> <td> 0.000</td> <td> 1.33e+05</td> <td> 1.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98166]</th> <td> 1.281e+05</td> <td> 7736.756</td> <td>   16.557</td> <td> 0.000</td> <td> 1.13e+05</td> <td> 1.43e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98168]</th> <td> 3.781e+04</td> <td> 7578.553</td> <td>    4.989</td> <td> 0.000</td> <td>  2.3e+04</td> <td> 5.27e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98177]</th> <td> 2.388e+05</td> <td> 7810.730</td> <td>   30.573</td> <td> 0.000</td> <td> 2.23e+05</td> <td> 2.54e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98178]</th> <td> 6.369e+04</td> <td> 7531.210</td> <td>    8.457</td> <td> 0.000</td> <td> 4.89e+04</td> <td> 7.85e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98188]</th> <td> 3.219e+04</td> <td> 9382.838</td> <td>    3.430</td> <td> 0.001</td> <td> 1.38e+04</td> <td> 5.06e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98198]</th> <td> 4.488e+04</td> <td> 7407.290</td> <td>    6.058</td> <td> 0.000</td> <td> 3.04e+04</td> <td> 5.94e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98199]</th> <td>  3.68e+05</td> <td> 7470.601</td> <td>   49.262</td> <td> 0.000</td> <td> 3.53e+05</td> <td> 3.83e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.7]</th>       <td> 1.631e+04</td> <td> 2411.464</td> <td>    6.762</td> <td> 0.000</td> <td> 1.16e+04</td> <td>  2.1e+04</td>
+</tr>
+<tr>
+  <th>C(grade)[T.8]</th>       <td>  5.37e+04</td> <td> 2785.058</td> <td>   19.283</td> <td> 0.000</td> <td> 4.82e+04</td> <td> 5.92e+04</td>
+</tr>
+<tr>
+  <th>C(grade)[T.9]</th>       <td> 1.282e+05</td> <td> 3572.600</td> <td>   35.873</td> <td> 0.000</td> <td> 1.21e+05</td> <td> 1.35e+05</td>
+</tr>
+<tr>
+  <th>sca_sqft_living</th>     <td> 1.384e+05</td> <td> 1446.825</td> <td>   95.690</td> <td> 0.000</td> <td> 1.36e+05</td> <td> 1.41e+05</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>2928.305</td> <th>  Durbin-Watson:     </th> <td>   1.988</td> 
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td>10189.665</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 0.766</td>  <th>  Prob(JB):          </th> <td>    0.00</td> 
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td> 6.241</td>  <th>  Cond. No.          </th> <td>    77.1</td> 
+</tr>
+</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+
+
 ```python
-# f1 = 'price~C(codezipcode)+C(grade)+sca_sqft_living+sca_sqft_living15'
-f1 = 'price ~ C(codezipcode) + C(grade) + sca_sqft_living + sca_sqft_living15'
+reg_mods['model6'] = {'vars': f6, 'r2': 0.780, 's': 0.766, 'k': 6.241}
+reg_mods
+```
+
+
+
+
+    {'model1': {'vars': 'grade+sqft_living+bathrooms',
+      'r2': 0.536,
+      's': 3.293,
+      'k': 35.828},
+     'model2': {'vars': 'C(zipcode)+grade+sqft_living+sqft_living15+condition_2+condition_3+condition_4+condition_5',
+      'r2': 0.75,
+      's': 5.17,
+      'k': 75.467},
+     'model3': {'vars': 'C(zipcode)+grade+sqft_living',
+      'r2': 0.744,
+      's': 4.927,
+      'k': 69.417},
+     'model4': {'vars': 'C(zipcode)+C(grade)+sqft_living',
+      'r2': 0.783,
+      's': 4.032,
+      'k': 55.222},
+     'model5': {'vars': 'C(zipcode)+C(grade)+sqft_living',
+      'r2': 0.78,
+      's': 0.766,
+      'k': 6.241},
+     'model6': {'vars': 'C(zipcode)+C(grade)+sca_sqft_living',
+      'r2': 0.78,
+      's': 0.766,
+      'k': 6.241}}
+
+
+
+
+```python
+# save final output
+df_fin = df_zero_outs.copy()
+
+with open('data.pickle', 'wb') as f:
+    pickle.dump(df_fin, f, pickle.HIGHEST_PROTOCOL)
 ```
 
 
 ```python
-# save final output/output
-# df_final_data.to_csv(data_filepath+'kc_housing_model_df_final_data.csv')
+
+df_fin.to_csv('kc_housing_model_df_final_data.csv')
 ```
 
 # VALIDATION
@@ -5233,254 +7365,496 @@ f1 = 'price ~ C(codezipcode) + C(grade) + sca_sqft_living + sca_sqft_living15'
 # k_fold_val_ols(X,y,k=10):
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn import metrics
+from sklearn import metrics 
 
-y = df_run['price']
+
+y = df_fin['price']
+
+X = df_fin.drop('price', axis=1)
 
 
 # Run 10-fold cross validation
 results = [['set#','R_square_train','MSE_train','R_square_test','MSE_test']]
 
+
 num_coeff = X.shape[1]
 
+
 list_predictors = [str(x) for x in X.columns]
-list_predictors.append('intercept')
+list_predictors.append('intercept') 
+
 
 reg_params = [list_predictors]
+
 
 i=0
 k=10
 while i <(k+1):
     X_train, X_test, y_train, y_test = train_test_split(X,y) #,stratify=[cat_col_names])
 
-    data = pd.concat([X_train,y_train],axis=1)
-    f1 = 'price~C(codezipcode)+grade+sca_sqft_living+sca_sqft_living15'
-    model = smf.ols(formula=f1, data=data).fit()
-    model.summary()
 
+    data = pd.concat([X_train,y_train],axis=1)
+    f = 'price~C(zipcode)+C(grade)+sca_sqft_living' 
+    model = smf.ols(formula=f, data=data).fit()
+    model.summary()
+    
     y_hat_train = model.predict(X_train)
     y_hat_test = model.predict(X_test)
+
 
     train_residuals = y_hat_train - y_train
     test_residuals = y_hat_test - y_test
 
 
+        
     train_mse = metrics.mean_squared_error(y_train, y_hat_train)
     test_mse = metrics.mean_squared_error(y_test, y_hat_test)
 
+
     R_sqare_train = metrics.r2_score(y_train,y_hat_train)
     R_square_test = metrics.r2_score(y_test,y_hat_test)
+
 
     results.append([i,R_sqare_train,train_mse,R_square_test,test_mse])
     i+=1
 
 
+    
 results = pd.DataFrame(results[1:],columns=results[0])
 results
 model.summary()
 ```
 
 
+
+
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>          <td>price</td>      <th>  R-squared:         </th>  <td>   0.784</td>  
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th>  <td>   0.782</td>  
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th>  <td>   704.4</td>  
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 07 Nov 2019</td> <th>  Prob (F-statistic):</th>   <td>  0.00</td>   
+</tr>
+<tr>
+  <th>Time:</th>                 <td>04:53:10</td>     <th>  Log-Likelihood:    </th> <td>-1.8305e+05</td>
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td> 14274</td>      <th>  AIC:               </th>  <td>3.662e+05</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td> 14200</td>      <th>  BIC:               </th>  <td>3.668e+05</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    73</td>      <th>                     </th>      <td> </td>     
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>      <td> </td>     
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+           <td></td>              <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>           <td> 2.512e+05</td> <td> 6131.069</td> <td>   40.970</td> <td> 0.000</td> <td> 2.39e+05</td> <td> 2.63e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98002]</th> <td> 6908.5365</td> <td> 9352.350</td> <td>    0.739</td> <td> 0.460</td> <td>-1.14e+04</td> <td> 2.52e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98003]</th> <td> 2371.7091</td> <td> 8457.202</td> <td>    0.280</td> <td> 0.779</td> <td>-1.42e+04</td> <td> 1.89e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98004]</th> <td> 5.306e+05</td> <td> 1.05e+04</td> <td>   50.506</td> <td> 0.000</td> <td>  5.1e+05</td> <td> 5.51e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98005]</th> <td> 3.515e+05</td> <td> 1.02e+04</td> <td>   34.589</td> <td> 0.000</td> <td> 3.32e+05</td> <td> 3.71e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98006]</th> <td> 2.911e+05</td> <td> 7909.032</td> <td>   36.806</td> <td> 0.000</td> <td> 2.76e+05</td> <td> 3.07e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98007]</th> <td> 2.571e+05</td> <td> 1.08e+04</td> <td>   23.754</td> <td> 0.000</td> <td> 2.36e+05</td> <td> 2.78e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98008]</th> <td> 2.576e+05</td> <td> 8564.971</td> <td>   30.079</td> <td> 0.000</td> <td> 2.41e+05</td> <td> 2.74e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98010]</th> <td> 9.596e+04</td> <td> 1.26e+04</td> <td>    7.641</td> <td> 0.000</td> <td> 7.13e+04</td> <td> 1.21e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98011]</th> <td> 1.438e+05</td> <td> 9565.386</td> <td>   15.031</td> <td> 0.000</td> <td> 1.25e+05</td> <td> 1.63e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98014]</th> <td> 1.325e+05</td> <td>  1.2e+04</td> <td>   11.061</td> <td> 0.000</td> <td> 1.09e+05</td> <td> 1.56e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98019]</th> <td> 9.119e+04</td> <td> 9261.733</td> <td>    9.846</td> <td> 0.000</td> <td>  7.3e+04</td> <td> 1.09e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98022]</th> <td> 4.119e+04</td> <td> 8791.165</td> <td>    4.685</td> <td> 0.000</td> <td>  2.4e+04</td> <td> 5.84e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98023]</th> <td>-1.406e+04</td> <td> 7456.425</td> <td>   -1.886</td> <td> 0.059</td> <td>-2.87e+04</td> <td>  551.979</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98024]</th> <td> 1.711e+05</td> <td> 1.33e+04</td> <td>   12.899</td> <td> 0.000</td> <td> 1.45e+05</td> <td> 1.97e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98027]</th> <td>  1.97e+05</td> <td> 8009.097</td> <td>   24.592</td> <td> 0.000</td> <td> 1.81e+05</td> <td> 2.13e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98028]</th> <td> 1.382e+05</td> <td> 8374.672</td> <td>   16.504</td> <td> 0.000</td> <td> 1.22e+05</td> <td> 1.55e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98029]</th> <td> 2.186e+05</td> <td> 8291.511</td> <td>   26.361</td> <td> 0.000</td> <td> 2.02e+05</td> <td> 2.35e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98030]</th> <td> 1996.1523</td> <td> 8588.503</td> <td>    0.232</td> <td> 0.816</td> <td>-1.48e+04</td> <td> 1.88e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98031]</th> <td> 9574.9402</td> <td> 8616.165</td> <td>    1.111</td> <td> 0.266</td> <td>-7313.872</td> <td> 2.65e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98032]</th> <td> -966.5899</td> <td>  1.1e+04</td> <td>   -0.088</td> <td> 0.930</td> <td>-2.25e+04</td> <td> 2.06e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98033]</th> <td> 3.287e+05</td> <td> 7871.339</td> <td>   41.763</td> <td> 0.000</td> <td> 3.13e+05</td> <td> 3.44e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98034]</th> <td> 1.819e+05</td> <td> 7185.771</td> <td>   25.317</td> <td> 0.000</td> <td> 1.68e+05</td> <td> 1.96e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98038]</th> <td> 3.596e+04</td> <td> 7111.112</td> <td>    5.057</td> <td> 0.000</td> <td>  2.2e+04</td> <td> 4.99e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98039]</th> <td>  6.87e+05</td> <td> 5.23e+04</td> <td>   13.148</td> <td> 0.000</td> <td> 5.85e+05</td> <td> 7.89e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98040]</th> <td> 4.574e+05</td> <td> 1.02e+04</td> <td>   44.856</td> <td> 0.000</td> <td> 4.37e+05</td> <td> 4.77e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98042]</th> <td> 1.065e+04</td> <td> 7146.490</td> <td>    1.491</td> <td> 0.136</td> <td>-3355.086</td> <td> 2.47e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98045]</th> <td> 1.129e+05</td> <td> 9403.221</td> <td>   12.009</td> <td> 0.000</td> <td> 9.45e+04</td> <td> 1.31e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98052]</th> <td> 2.567e+05</td> <td> 7243.531</td> <td>   35.443</td> <td> 0.000</td> <td> 2.43e+05</td> <td> 2.71e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98053]</th> <td> 2.437e+05</td> <td> 8002.260</td> <td>   30.450</td> <td> 0.000</td> <td> 2.28e+05</td> <td> 2.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98055]</th> <td> 4.272e+04</td> <td> 8714.214</td> <td>    4.902</td> <td> 0.000</td> <td> 2.56e+04</td> <td> 5.98e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98056]</th> <td> 1.028e+05</td> <td> 7828.199</td> <td>   13.127</td> <td> 0.000</td> <td> 8.74e+04</td> <td> 1.18e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98058]</th> <td> 4.096e+04</td> <td> 7566.253</td> <td>    5.414</td> <td> 0.000</td> <td> 2.61e+04</td> <td> 5.58e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98059]</th> <td> 9.627e+04</td> <td> 7577.985</td> <td>   12.704</td> <td> 0.000</td> <td> 8.14e+04</td> <td> 1.11e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98065]</th> <td> 1.244e+05</td> <td> 8422.276</td> <td>   14.766</td> <td> 0.000</td> <td> 1.08e+05</td> <td> 1.41e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98070]</th> <td> 1.867e+05</td> <td> 1.21e+04</td> <td>   15.414</td> <td> 0.000</td> <td> 1.63e+05</td> <td>  2.1e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98072]</th> <td> 1.808e+05</td> <td> 8846.254</td> <td>   20.439</td> <td> 0.000</td> <td> 1.63e+05</td> <td> 1.98e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98074]</th> <td> 2.192e+05</td> <td> 8117.353</td> <td>   27.010</td> <td> 0.000</td> <td> 2.03e+05</td> <td> 2.35e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98075]</th> <td> 2.527e+05</td> <td> 9290.563</td> <td>   27.198</td> <td> 0.000</td> <td> 2.34e+05</td> <td> 2.71e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98077]</th> <td> 1.837e+05</td> <td> 1.07e+04</td> <td>   17.127</td> <td> 0.000</td> <td> 1.63e+05</td> <td> 2.05e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98092]</th> <td>-1.077e+04</td> <td> 8060.050</td> <td>   -1.336</td> <td> 0.182</td> <td>-2.66e+04</td> <td> 5030.681</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98102]</th> <td> 3.962e+05</td> <td> 1.28e+04</td> <td>   30.910</td> <td> 0.000</td> <td> 3.71e+05</td> <td> 4.21e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98103]</th> <td> 3.173e+05</td> <td> 7077.837</td> <td>   44.831</td> <td> 0.000</td> <td> 3.03e+05</td> <td> 3.31e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98105]</th> <td> 3.813e+05</td> <td> 9468.271</td> <td>   40.275</td> <td> 0.000</td> <td> 3.63e+05</td> <td>    4e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98106]</th> <td> 9.728e+04</td> <td> 8042.246</td> <td>   12.097</td> <td> 0.000</td> <td> 8.15e+04</td> <td> 1.13e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98107]</th> <td> 3.191e+05</td> <td> 8610.191</td> <td>   37.062</td> <td> 0.000</td> <td> 3.02e+05</td> <td> 3.36e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98108]</th> <td> 1.026e+05</td> <td> 9401.760</td> <td>   10.911</td> <td> 0.000</td> <td> 8.42e+04</td> <td> 1.21e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98109]</th> <td> 4.335e+05</td> <td> 1.29e+04</td> <td>   33.633</td> <td> 0.000</td> <td> 4.08e+05</td> <td> 4.59e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98112]</th> <td> 4.134e+05</td> <td> 1.01e+04</td> <td>   40.992</td> <td> 0.000</td> <td> 3.94e+05</td> <td> 4.33e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98115]</th> <td> 3.233e+05</td> <td> 7095.925</td> <td>   45.564</td> <td> 0.000</td> <td> 3.09e+05</td> <td> 3.37e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98116]</th> <td> 2.969e+05</td> <td> 8094.042</td> <td>   36.682</td> <td> 0.000</td> <td> 2.81e+05</td> <td> 3.13e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98117]</th> <td> 3.127e+05</td> <td> 7191.060</td> <td>   43.478</td> <td> 0.000</td> <td> 2.99e+05</td> <td> 3.27e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98118]</th> <td> 1.619e+05</td> <td> 7367.498</td> <td>   21.977</td> <td> 0.000</td> <td> 1.47e+05</td> <td> 1.76e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98119]</th> <td>  4.21e+05</td> <td> 1.01e+04</td> <td>   41.849</td> <td> 0.000</td> <td> 4.01e+05</td> <td> 4.41e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98122]</th> <td> 3.081e+05</td> <td> 8402.446</td> <td>   36.667</td> <td> 0.000</td> <td> 2.92e+05</td> <td> 3.25e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98125]</th> <td> 1.929e+05</td> <td> 7649.985</td> <td>   25.210</td> <td> 0.000</td> <td> 1.78e+05</td> <td> 2.08e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98126]</th> <td> 1.919e+05</td> <td> 7887.302</td> <td>   24.332</td> <td> 0.000</td> <td> 1.76e+05</td> <td> 2.07e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98133]</th> <td> 1.514e+05</td> <td> 7301.418</td> <td>   20.731</td> <td> 0.000</td> <td> 1.37e+05</td> <td> 1.66e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98136]</th> <td> 2.621e+05</td> <td> 8493.453</td> <td>   30.856</td> <td> 0.000</td> <td> 2.45e+05</td> <td> 2.79e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98144]</th> <td> 2.483e+05</td> <td> 8232.349</td> <td>   30.156</td> <td> 0.000</td> <td> 2.32e+05</td> <td> 2.64e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98146]</th> <td> 1.173e+05</td> <td> 8487.585</td> <td>   13.825</td> <td> 0.000</td> <td> 1.01e+05</td> <td> 1.34e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98148]</th> <td> 4.797e+04</td> <td> 1.43e+04</td> <td>    3.365</td> <td> 0.001</td> <td>    2e+04</td> <td> 7.59e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98155]</th> <td> 1.435e+05</td> <td> 7527.316</td> <td>   19.067</td> <td> 0.000</td> <td> 1.29e+05</td> <td> 1.58e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98166]</th> <td> 1.247e+05</td> <td> 8813.587</td> <td>   14.145</td> <td> 0.000</td> <td> 1.07e+05</td> <td> 1.42e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98168]</th> <td> 3.502e+04</td> <td> 8773.444</td> <td>    3.992</td> <td> 0.000</td> <td> 1.78e+04</td> <td> 5.22e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98177]</th> <td> 2.352e+05</td> <td> 8991.768</td> <td>   26.160</td> <td> 0.000</td> <td> 2.18e+05</td> <td> 2.53e+05</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98178]</th> <td> 5.321e+04</td> <td> 8567.429</td> <td>    6.211</td> <td> 0.000</td> <td> 3.64e+04</td> <td>    7e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98188]</th> <td>  2.67e+04</td> <td> 1.04e+04</td> <td>    2.568</td> <td> 0.010</td> <td> 6322.089</td> <td> 4.71e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98198]</th> <td> 4.376e+04</td> <td> 8428.700</td> <td>    5.192</td> <td> 0.000</td> <td> 2.72e+04</td> <td> 6.03e+04</td>
+</tr>
+<tr>
+  <th>C(zipcode)[T.98199]</th> <td> 3.603e+05</td> <td> 8584.627</td> <td>   41.969</td> <td> 0.000</td> <td> 3.43e+05</td> <td> 3.77e+05</td>
+</tr>
+<tr>
+  <th>C(grade)[T.7]</th>       <td> 1.759e+04</td> <td> 2758.771</td> <td>    6.376</td> <td> 0.000</td> <td> 1.22e+04</td> <td>  2.3e+04</td>
+</tr>
+<tr>
+  <th>C(grade)[T.8]</th>       <td>  5.49e+04</td> <td> 3190.897</td> <td>   17.205</td> <td> 0.000</td> <td> 4.86e+04</td> <td> 6.12e+04</td>
+</tr>
+<tr>
+  <th>C(grade)[T.9]</th>       <td> 1.308e+05</td> <td> 4090.245</td> <td>   31.987</td> <td> 0.000</td> <td> 1.23e+05</td> <td> 1.39e+05</td>
+</tr>
+<tr>
+  <th>sca_sqft_living</th>     <td> 1.382e+05</td> <td> 1646.447</td> <td>   83.948</td> <td> 0.000</td> <td> 1.35e+05</td> <td> 1.41e+05</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>2080.969</td> <th>  Durbin-Watson:     </th> <td>   2.002</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td>6504.428</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 0.757</td>  <th>  Prob(JB):          </th> <td>    0.00</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td> 5.940</td>  <th>  Cond. No.          </th> <td>    82.8</td>
+</tr>
+</table><br/><br/>Warnings:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+
+# INTERPRET
+
+> SUMMARY: We can be confident that 78% of the final model (#6) explains the variation in data. Unfortunately, multicollinearity is a significant issue for linear regression and cannot be completely avoided. 
+
+
+> RECOMMENDATIONS: According to our final model, the best predictors of house prices are sqft-living, zipcode, and grade. 
+
+> * Homes with larger living areas are valued higher than smaller homes. 
+> * Houses in certain zip codes are valued at higher prices than other zip codes.
+> * Homes that score above at least 8 on Grade will sell higher than those below.
+
+> FUTURE WORK:
+* Identify ranking for zip codes by highest home prices (median home value)
+ 
+
+# Additional Research
+
+> **Do house prices change over time or depending on season?**
+This data set was limited to a one-year time-frame. I'd be interested in widening the sample size to investigate how property values fluctuate over time as well as how they are affected by market fluctuations.
+
+> **Can we validate the accuracy of our prediction model by looking specifically at houses that resold for a higher price in a given timeframe?** In other words, try to identify which specific variables changed (e.g. increased grade score after doing renovations) and therefore were determining factors in the increased price of the home when it was resold.
+
+
 ```python
-resid1=model.resid
-fig = sm.graphics.qqplot(resid1, dist=stats.norm, line='45', fit=True,marker='.')
+# pypi package for retrieving information based on us zipcodes
+from uszipcode import SearchEngine
+search = SearchEngine(simple_zipcode=True) # set simple_zipcode=False to use rich info database
+
+# create array of zipcodes
+zipcodes = df['zipcode'].unique()
+zipcodes
 ```
 
-# Visualizations
 
 
-```python
-colormap = ('skyblue', 'salmon', 'lightgreen')
-plt.figure()
-pd.plotting.parallel_coordinates(df, 'price', cols=['sqft_living', 'grade_cat', 'zip_cat', 'bathroom_cat'], color=colormap);
-pd.plotting.parallel_coordinates
-#pd.plotting.scatter_matrix(df);
-```
 
+    array([98178, 98125, 98028, 98136, 98074, 98053, 98003, 98198, 98146,
+           98038, 98007, 98115, 98107, 98126, 98019, 98103, 98002, 98133,
+           98040, 98092, 98030, 98119, 98112, 98052, 98027, 98117, 98058,
+           98001, 98056, 98166, 98023, 98070, 98148, 98105, 98042, 98008,
+           98059, 98122, 98144, 98004, 98005, 98034, 98075, 98116, 98010,
+           98118, 98199, 98032, 98045, 98102, 98077, 98108, 98168, 98177,
+           98065, 98029, 98006, 98109, 98022, 98033, 98155, 98024, 98011,
+           98031, 98106, 98072, 98188, 98014, 98055, 98039])
 
-```python
-import plotly.graph_objects as go
-
-import pandas as pd
-
-#df = pd.read_csv("https://raw.githubusercontent.com/bcdunbar/datasets/master/parcoords_data.csv")
-
-fig = go.Figure(data=
-    go.Parcoords(
-        line = dict(color = df['colorVal'],
-                   colorscale = 'Electric',
-                   showscale = True,
-                   cmin = -4000,
-                   cmax = -100),
-        dimensions = list([
-            dict(range = [32000,227900],
-                 constraintrange = [100000,150000],
-                 label = "Block Height", values = df['blockHeight']),
-            dict(range = [0,700000],
-                 label = 'Block Width', values = df['blockWidth']),
-            dict(tickvals = [0,0.5,1,2,3],
-                 ticktext = ['A','AB','B','Y','Z'],
-                 label = 'Cyclinder Material', values = df['cycMaterial']),
-            dict(range = [-1,4],
-                 tickvals = [0,1,2,3],
-                 label = 'Block Material', values = df['blockMaterial']),
-            dict(range = [134,3154],
-                 visible = True,
-                 label = 'Total Weight', values = df['totalWeight']),
-            dict(range = [9,19984],
-                 label = 'Assembly Penalty Wt', values = df['assemblyPW']),
-            dict(range = [49000,568000],
-                 label = 'Height st Width', values = df['HstW'])])
-    )
-)
-fig.show()
-```
-
-##### TABLEAU HOW TO (temp)
-Short how-to plot geo data in Tableau:
-Load in your .csv dataset from your project.
-Let it use data interpreter. It should identify zipcode as a location.
-On your worksheet page:
-For plotting each price for each house:
-Drag the Measures Lat and Long onto the rows and columns boxes (top of sheet)
-Drag the Measure price onto the Color Button under Marks.
-It should now be listed at the bottom of the Marks panel.
-Right-click and select "Dimension"
-For plotting median income by zipcode:
-Drag zipcode form the Dimensions panel onto the main graph window.
-It will automatically load in map of location.
-Drag price onto the color button (it will now appear in the Marks window)
-Rich click on Price. Select "Measure" > Median
-Customize map features by selecting "Map" > Map Layers on the Menu Bar.
 
 
 
 ```python
-# https://www.youtube.com/watch?v=upBvuTqOy9k&feature=youtu.be
+# create empty dictionary 
+dzip = {}
 
-import plotly
-plotly.offline.init_notebook_mode(connected=True)
+# search pypi uszipcode library to retreive data for each zipcode
+for c in zipcodes:
+    z = search.by_zipcode(c)
+    dzip[c] = z.to_dict()
+    
+dzip.keys()
+```
 
-import pandas as pd
-import numpy as np
 
-import plotly
-plotly.offline.init_notebook_mode(connected=True)
-import plotly.graph_objs as go
 
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
-init_notebook_mode(connected=True)
+    dict_keys([98178, 98125, 98028, 98136, 98074, 98053, 98003, 98198, 98146, 98038, 98007, 98115, 98107, 98126, 98019, 98103, 98002, 98133, 98040, 98092, 98030, 98119, 98112, 98052, 98027, 98117, 98058, 98001, 98056, 98166, 98023, 98070, 98148, 98105, 98042, 98008, 98059, 98122, 98144, 98004, 98005, 98034, 98075, 98116, 98010, 98118, 98199, 98032, 98045, 98102, 98077, 98108, 98168, 98177, 98065, 98029, 98006, 98109, 98022, 98033, 98155, 98024, 98011, 98031, 98106, 98072, 98188, 98014, 98055, 98039])
+
+
+
+
+```python
+# check information for one of the zipcodes 
+# 98032 had the worst p-value (0.838)
+dzip[98032]
+```
+
+
+
+
+    {'zipcode': '98032',
+     'zipcode_type': 'Standard',
+     'major_city': 'Kent',
+     'post_office_city': 'Kent, WA',
+     'common_city_list': ['Kent'],
+     'county': 'King County',
+     'state': 'WA',
+     'lat': 47.4,
+     'lng': -122.26,
+     'timezone': 'Pacific',
+     'radius_in_miles': 5.0,
+     'area_code_list': ['253', '425'],
+     'population': 33853,
+     'population_density': 2024.0,
+     'land_area_in_sqmi': 16.72,
+     'water_area_in_sqmi': 0.29,
+     'housing_units': 14451,
+     'occupied_housing_units': 13393,
+     'median_home_value': 234700,
+     'median_household_income': 48853,
+     'bounds_west': -122.309417,
+     'bounds_east': -122.217459,
+     'bounds_north': 47.441233,
+     'bounds_south': 47.34633}
+
+
+
+
+```python
+# try retrieving just the median home value for a given zipcode 
+dzip[98199]['median_home_value'] #98199 mhv is 3x higher than 98032
+```
+
+
+
+
+    606200
+
+
+
+
+```python
+# create empty lists for keys and vals
+med_home_vals = []
+zips = []
+
+# pull just the median home values from dataset and append to list
+for index in dzip:
+    med_home_vals.append(dzip[index]['median_home_value'])
+
+# put zipcodes in other list
+for index in dzip:
+    zips.append(dzip[index]['zipcode'])
+
+# zip both lists into dictionary
+dzip_mhv = dict(zip(zips, med_home_vals))
 ```
 
 
 ```python
-data = go.Scatter(x=[1,2,3,4], y=[3,6,8,9], name='Blue')
-layout = go.Layout(title='Random Scatter')
+# we now have a dictionary that matches median home value to zipcode.
+dzip_mhv
 
-fig = go.Figure(data=data, layout=layout)
+mills = []
+halfmills = []
+
+for k,v in dzip_mhv.items():
+    if v > 1000000:
+        mills.append([k])
+    if v > 500000:
+        halfmills.append([k])
+
+print(mills)
+print(halfmills)
 ```
 
+    [['98039']]
+    [['98074'], ['98053'], ['98040'], ['98119'], ['98112'], ['98105'], ['98004'], ['98005'], ['98075'], ['98199'], ['98077'], ['98006'], ['98033'], ['98039']]
 
-```python
-
-```
-
-* "how did you pick the question(s) that you did?"
-* "why are these questions important from a business perspective?"
-* "how did you decide on the data cleaning options you performed?"
-* "why did you choose a given method or library?"
-* "why did you select those visualizations and what did you learn from each of them?"
-* "why did you pick those features as predictors?"
-* "how would you interpret the results?"
-* "how confident are you in the predictive quality of the results?"
-* "what are some of the things that could cause the results to be wrong?"
-
-## DATE
-
-
-```python
-# group data by dates/months/years to explore comparison in market fluctuations
-
-print(df.date.min())
-print(df.date.max())
-
-# Our dataset contains values spanning two years: beginning May 2014 to end of May 2015
-```
-
-
-```python
-df.date.dt.year.value_counts(normalize=True)
-# 2014    14622
-# 2015     6975
-# The majority of our data (67%) is from 2014
-```
-
-
-```python
-df.date.dt.month.value_counts()
-```
-
-### Impact of date (month or year) on price
-Question: are housing prices lower or higher in certain months (better to buy)?
-
-
-```python
-# create new columns for year and month
-df['year'] = df['date'].dt.year
-df['month'] = df['date'].dt.month
-```
-
-
-```python
-# There does not appear to be any correlation whatsoever with
-weights = np.linspace(0,1)
-np.corrcoef(df['month'], df['price'])
-np.corrcoef(df['year'], df['price'])
-```
-
-
-```python
-df.month.value_counts(normalize=True)
-```
-
-
-```python
-# create variables for each series you want to pass into the xcols list and compare them against one
-y_sub = 'price'
-date_sub = ['year','month']
-
-sub_scatter(date_sub, y_sub)
-```
-
-
-```python
-# check data discrepancies between duplicates (if any):
-
-# 1 - compare price (house value) and date of sale:
-
-# dupes         date        price
-# 6021501535   12/23/2014   700,000
-#               7/25/2014   430,000
-
-# 4139480200   12/9/2014
-# 7520000520   3/11/2015
-# 3969300030   12/29/2014
-# 2231500030   3/24/2015
-
-
-
-#for df['id'] in df:
-#    if df['id'] ==
-#        print(f"{df.id} : {date} : {price}\n")
-     #  4139480200
-#dupes_id = dupes['id']
-#dupes_price = dupes['price']
-
-# 2 - compare other discrepancies and/or missing values
-```
-
-
-```python
-DataFrame.to_period(self[, freq, axis, copy])	Convert DataFrame from DatetimeIndex to PeriodIndex with desired frequency (inferred from index if not passed).
-```
