@@ -1,4 +1,4 @@
-
+![](./output/output_181_9.png)
 ---
 **Module 1 Final Project Submission**
 * Student name: **Ru Keïn**
@@ -6,11 +6,6 @@
 * Project review date/time: **November 4, 2019 at 2:00 PM PST**
 * Instructor name: **James Irving, PhD**
 ---
-> Blog post URL: 
-http://www.hakkeray.com/projects/datascience/2019/11/06/predicting-home-values-with-multiple-linear-regression.html
-
-> Link to video: 
-https://vimeo.com/rukein/datascience-project-1
 
 > Link to tableau public: https://public.tableau.com/views/HousePricesbyZipCodeinKingCountyWA/KingCounty?:display_count=y&:origin=viz_share_link
 
